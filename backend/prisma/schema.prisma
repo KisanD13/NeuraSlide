@@ -6,10 +6,204 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  password  String
+  firstName String?
+  lastName  String?
+  role      UserRole @default(USER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  teams     TeamMember[]
+  createdAtAutomations Automation[] @relation("CreatedBy")
+  updatedAtAutomations Automation[] @relation("UpdatedBy")
+
+  @@map("users")
+}
+
+model Team {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  members     TeamMember[]
+  instagramAccounts InstagramAccount[]
+  automations Automation[]
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id     String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId String   @db.ObjectId
+  teamId String   @db.ObjectId
+  role   TeamRole @default(MEMBER)
+  joinedAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+  @@map("team_members")
+}
+
+model InstagramAccount {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  teamId       String   @db.ObjectId
+  igUserId     String   @unique
+  igUsername   String
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  isActive     Boolean  @default(true)
+  meta         Json?    // Store additional Instagram account metadata
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  team         Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+  automations  Automation[]
+
+  @@map("instagram_accounts")
+}
+
+model Automation {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  teamId      String        @db.ObjectId
+  instagramAccountId String? @db.ObjectId
+  name        String
+  description String?
+  triggerType TriggerType
+  conditions  Json          // Store trigger conditions as JSON
+  actions     Json          // Store automation actions as JSON
+  isActive    Boolean       @default(true)
+  isAIAutopilot Boolean     @default(false)
+  aiSettings  Json?         // AI autopilot settings
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  createdBy   String        @db.ObjectId
+  updatedBy   String        @db.ObjectId
+
+  // Relations
+  team        Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  instagramAccount InstagramAccount? @relation(fields: [instagramAccountId], references: [id], onDelete: SetNull)
+  creator     User @relation("CreatedBy", fields: [createdBy], references: [id])
+  updater     User @relation("UpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("automations")
+}
+
+model Conversation {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  instagramAccountId String @db.ObjectId
+  externalId    String   // Instagram conversation/message ID
+  externalUserId String  // Instagram user ID
+  externalUsername String? // Instagram username
+  status        ConversationStatus @default(ACTIVE)
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  messages     Message[]
+
+  @@unique([instagramAccountId, externalId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String   @db.ObjectId
+  externalId     String?  // Instagram message ID
+  sender         MessageSender
+  text           String
+  metadata       Json?    // Store message metadata (attachments, etc.)
+  isDelivered    Boolean  @default(false)
+  deliveredAt    DateTime?
+  errorMessage   String?
+  createdAt      DateTime @default(now())
+
+  // Relations
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model JobLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  jobType   JobType
+  payload   Json
+  status    JobStatus @default(PENDING)
+  error     String?
+  runAt     DateTime @default(now())
+  completedAt DateTime?
+
+  @@map("job_logs")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum TriggerType {
+  DM_KEYWORD
+  COMMENT_KEYWORD
+  STORY_REPLY
+  MENTION
+  HASHTAG
+}
+
+enum ConversationStatus {
+  ACTIVE
+  ARCHIVED
+  BLOCKED
+}
+
+enum MessageSender {
+  USER
+  BOT
+  EXTERNAL
+}
+
+enum JobType {
+  PROCESS_WEBHOOK_EVENT
+  RUN_AUTOMATION
+  DELIVER_MESSAGE
+  SYNC_ACCOUNT
+  AI_GENERATE_REPLY
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
 }
