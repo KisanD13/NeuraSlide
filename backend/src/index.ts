@@ -219,7 +219,7 @@ async function startServer() {
       console.log(`🌐 Server URL: http://localhost:${PORT}`);
       console.log(`📈 Health Check: http://localhost:${PORT}/health`);
       console.log(`🔗 API Documentation: http://localhost:${PORT}/`);
-      console.log("=".repeat(50));
+      // console.log("=".repeat(50));
     });
   } catch (error) {
     console.error("❌ Failed to start server:", error);
