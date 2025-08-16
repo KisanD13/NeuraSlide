@@ -22,8 +22,12 @@ export class AuthService {
       const saltRounds = config.bcryptSaltRounds;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
       return hashedPassword;
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Error hashing password:", error);
+
+      if (error.status) {
+        throw error; // Re-throw createHttpError
+      }
 
       throw createHttpError(
         500,
@@ -40,8 +44,13 @@ export class AuthService {
     try {
       const isMatch = await bcrypt.compare(plainPassword, hashedPassword);
       return isMatch;
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Error comparing password:", error);
+
+      if (error.status) {
+        throw error; // Re-throw createHttpError
+      }
+
       throw createHttpError(
         500,
         "Unable to verify password. Please try again."
@@ -72,9 +81,11 @@ export class AuthService {
       return token;
     } catch (error: any) {
       logger.error("Error generating JWT token:", error);
+
       if (error.status) {
         throw error; // Re-throw createHttpError
       }
+
       throw createHttpError(500, "Unable to create session. Please try again.");
     }
   }
@@ -94,12 +105,17 @@ export class AuthService {
     } catch (error: any) {
       logger.error("Error verifying JWT token:", error);
 
+      if (error.status) {
+        throw error; // Re-throw createHttpError
+      }
+
       if (error.name === "TokenExpiredError") {
         throw createHttpError(
           401,
           "Your session has expired. Please log in again."
         );
       }
+
       if (error.name === "JsonWebTokenError") {
         throw createHttpError(401, "Invalid session. Please log in again.");
       }
@@ -126,10 +142,11 @@ export class AuthService {
       return token;
     } catch (error: any) {
       logger.error("Error generating email verification token:", error);
+
       if (error.status) {
-        throw error;
+        throw error; // Re-throw createHttpError
       }
-      
+
       throw createHttpError(
         500,
         "Unable to send verification email. Please try again."
@@ -158,9 +175,11 @@ export class AuthService {
       return token;
     } catch (error: any) {
       logger.error("Error generating password reset token:", error);
+
       if (error.status) {
-        throw error;
+        throw error; // Re-throw createHttpError
       }
+
       throw createHttpError(
         500,
         "Unable to send password reset email. Please try again."
@@ -206,31 +225,19 @@ export class AuthService {
       }
 
       if (error.name === "TokenExpiredError") {
-        if (expectedType === "email_verification") {
-          throw createHttpError(
-            400,
-            "Verification link has expired. Please request a new one."
-          );
-        } else {
-          throw createHttpError(
-            400,
-            "Reset link has expired. Please request a new one."
-          );
-        }
+        const message =
+          expectedType === "email_verification"
+            ? "Verification link has expired. Please request a new one."
+            : "Reset link has expired. Please request a new one.";
+        throw createHttpError(400, message);
       }
 
       if (error.name === "JsonWebTokenError") {
-        if (expectedType === "email_verification") {
-          throw createHttpError(
-            400,
-            "Invalid verification link. Please request a new one."
-          );
-        } else {
-          throw createHttpError(
-            400,
-            "Invalid reset link. Please request a new one."
-          );
-        }
+        const message =
+          expectedType === "email_verification"
+            ? "Invalid verification link. Please request a new one."
+            : "Invalid reset link. Please request a new one.";
+        throw createHttpError(400, message);
       }
 
       throw createHttpError(
@@ -261,10 +268,12 @@ export class AuthService {
       logger.info(`User authenticated successfully: ${user.email}`);
       return user;
     } catch (error: any) {
+      logger.error("Error authenticating user:", error);
+
       if (error.status) {
         throw error; // Re-throw createHttpError
       }
-      logger.error("Error authenticating user:", error);
+
       throw createHttpError(500, "Unable to sign in. Please try again.");
     }
   }
@@ -312,10 +321,12 @@ export class AuthService {
 
       return result;
     } catch (error: any) {
+      logger.error("Error creating user and team:", error);
+
       if (error.status) {
         throw error; // Re-throw createHttpError
       }
-      logger.error("Error creating user and team:", error);
+
       throw createHttpError(500, "Unable to create account. Please try again.");
     }
   }
@@ -328,6 +339,11 @@ export class AuthService {
       return null;
     } catch (error: any) {
       logger.error("Error finding user by email:", error);
+
+      if (error.status) {
+        throw error; // Re-throw createHttpError
+      }
+
       throw createHttpError(
         500,
         "Unable to access user data. Please try again."
@@ -343,6 +359,11 @@ export class AuthService {
       return null;
     } catch (error: any) {
       logger.error("Error finding user by ID:", error);
+
+      if (error.status) {
+        throw error; // Re-throw createHttpError
+      }
+
       throw createHttpError(
         500,
         "Unable to access user data. Please try again."
@@ -358,6 +379,11 @@ export class AuthService {
       return null;
     } catch (error: any) {
       logger.error("Error finding team by ID:", error);
+
+      if (error.status) {
+        throw error; // Re-throw createHttpError
+      }
+
       throw createHttpError(
         500,
         "Unable to access team data. Please try again."
@@ -376,10 +402,12 @@ export class AuthService {
       // TODO: Replace with actual Prisma database update
       logger.info(`Password updated for user: ${userId}`);
     } catch (error: any) {
-      if (error.status) {
-        throw error;
-      }
       logger.error("Error updating user password:", error);
+
+      if (error.status) {
+        throw error; // Re-throw createHttpError
+      }
+
       throw createHttpError(
         500,
         "Unable to update password. Please try again."
@@ -394,6 +422,11 @@ export class AuthService {
       logger.info(`Email verified for user: ${email}`);
     } catch (error: any) {
       logger.error("Error marking email as verified:", error);
+
+      if (error.status) {
+        throw error; // Re-throw createHttpError
+      }
+
       throw createHttpError(500, "Unable to verify email. Please try again.");
     }
   }
@@ -404,10 +437,12 @@ export class AuthService {
 
     const { password, ...userWithoutPassword } = user;
 
-    return {
+    const result: AuthResponse = {
       user: userWithoutPassword,
-      team: team as Team, // Ensure team is always of type Team (even if undefined)
       accessToken: token,
+      ...(team && { team }),
     };
+
+    return result;
   }
 }
