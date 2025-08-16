@@ -1,48 +1,32 @@
 // backend/src/middlewares/globalErrorHandler.ts
 
-import { Request, Response, NextFunction } from "express";
-import { logger } from "../utils/logger";
+import { NextFunction, Request, Response } from "express";
+import { HttpError } from "http-errors";
 import { config } from "../config/config";
+import { logger } from "../utils/logger";
 
-export const globalErrorHandler = (
-  err: any,
+const globalErrorHandler = (
+  err: HttpError,
   _req: Request,
   res: Response,
   _next: NextFunction
 ) => {
-  logger.error("Global error handler caught:", err);
+  // Log all errors for debugging
+  logger.error("Error occurred:", {
+    message: err.message,
+    status: err.status,
+    stack: err.stack,
+  });
 
-  // Default error response
-  const errorResponse = {
+  const statusCode = err.status || 500;
+
+  // Send consistent error response
+  res.status(statusCode).json({
     success: false,
-    message:
-      config.env === "development" ? err.message : "Something went wrong",
-    error: config.env === "development" ? err.stack : undefined,
+    message: err.message,
+    errorStack: config.env === "development" ? err.stack : "",
     timestamp: new Date().toISOString(),
-  };
-
-  // Handle specific error types
-  if (err.name === "ValidationError") {
-    return res.status(400).json({
-      ...errorResponse,
-      message: "Validation Error",
-    });
-  }
-
-  if (err.name === "UnauthorizedError") {
-    return res.status(401).json({
-      ...errorResponse,
-      message: "Unauthorized - Invalid or missing token",
-    });
-  }
-
-  if (err.name === "ForbiddenError") {
-    return res.status(403).json({
-      ...errorResponse,
-      message: "Forbidden - You don't have permission",
-    });
-  }
-
-  // Default 500 error
-  return res.status(500).json(errorResponse);
+  });
 };
+
+export default globalErrorHandler;
