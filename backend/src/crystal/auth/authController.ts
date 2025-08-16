@@ -1,6 +1,7 @@
 // backend/src/crystal/auth/authController.ts
 
 import { Request, Response, NextFunction } from "express";
+import createHttpError from "http-errors";
 import { AuthService } from "./authService";
 import { AuthValidation } from "./authValidation";
 import {
@@ -10,9 +11,7 @@ import {
   ResetPasswordRequest,
   ChangePasswordRequest,
   VerifyEmailRequest,
-  Team,
 } from "./authTypes";
-import { responseHelper } from "../../utils/response";
 import { logger } from "../../utils/logger";
 
 export class AuthController {
@@ -22,24 +21,17 @@ export class AuthController {
       // Extract data from request (like getting form values)
       const signupData: SignupRequest = req.body;
 
-      // Validate input (already done by middleware, but double-check)
+      // Validate input
       const validation = AuthValidation.validateSignup(signupData);
       if (!validation.isValid) {
-        return responseHelper.error(
-          res,
-          "Validation failed",
-          400,
-          validation.errors
-        );
+        return next(createHttpError(400, "Validation failed"));
       }
 
-      // Check if user already exists (placeholder - will use database later)
+      // Check if user already exists
       const existingUser = await AuthService.findUserByEmail(signupData.email);
       if (existingUser) {
-        return responseHelper.error(
-          res,
-          "User already exists with this email",
-          409
+        return next(
+          createHttpError(409, "User already exists with this email")
         );
       }
 
@@ -54,18 +46,17 @@ export class AuthController {
 
       logger.info(`User registered successfully: ${user.email}`);
 
-      // Send success response (like updating UI state)
-      return responseHelper.success(
-        res,
-        "User registered successfully",
-        {
+      // Send success response
+      res.status(201).json({
+        success: true,
+        message: "User registered successfully",
+        data: {
           ...authResponse,
-          emailVerificationToken: emailToken, // For development - remove in production
+          emailVerificationToken: emailToken, // For development only
         },
-        201
-      );
-    } catch (error) {
-      logger.error("Signup error:", error);
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
       return next(error);
     }
   }
@@ -79,12 +70,7 @@ export class AuthController {
       // Validate input
       const validation = AuthValidation.validateLogin(loginData);
       if (!validation.isValid) {
-        return responseHelper.error(
-          res,
-          "Validation failed",
-          400,
-          validation.errors
-        );
+        return next(createHttpError(400, "Validation failed"));
       }
 
       // Authenticate user (check email/password)
@@ -96,24 +82,21 @@ export class AuthController {
         : undefined;
 
       // Generate auth response with token
-      const authResponse = AuthService.createAuthResponse(user, team as Team);
+      const authResponse = AuthService.createAuthResponse(
+        user,
+        team || undefined
+      );
 
       logger.info(`User logged in successfully: ${user.email}`);
 
       // Send success response
-      return responseHelper.success(res, "Login successful", authResponse);
-    } catch (error) {
-      logger.error("Login error:", error);
-      const err = error as Error;
-
-      // Handle specific authentication errors
-      if (
-        err.message === "User not found" ||
-        err.message === "Invalid password"
-      ) {
-        return responseHelper.error(res, "Invalid email or password", 401);
-      }
-
+      res.status(200).json({
+        success: true,
+        message: "Login successful",
+        data: authResponse,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
       return next(error);
     }
   }
@@ -126,7 +109,11 @@ export class AuthController {
 
       logger.info(`User logged out`);
 
-      return responseHelper.success(res, "Logout successful");
+      res.status(200).json({
+        success: true,
+        message: "Logout successful",
+        timestamp: new Date().toISOString(),
+      });
     } catch (error) {
       logger.error("Logout error:", error);
       return next(error);
@@ -140,13 +127,13 @@ export class AuthController {
       const userId = (req as any).user?.sub;
 
       if (!userId) {
-        return responseHelper.error(res, "User not authenticated", 401);
+        return next(createHttpError(401, "User not authenticated"));
       }
 
       // Find user by ID
       const user = await AuthService.findUserById(userId);
       if (!user) {
-        return responseHelper.error(res, "User not found", 404);
+        return next(createHttpError(404, "User not found"));
       }
 
       // Find user's team
@@ -157,12 +144,13 @@ export class AuthController {
       // Remove password from response
       const { password, ...userWithoutPassword } = user;
 
-      return responseHelper.success(res, "User retrieved successfully", {
-        user: userWithoutPassword,
-        team,
+      res.status(200).json({
+        success: true,
+        message: "User retrieved successfully",
+        data: { user: userWithoutPassword, team },
+        timestamp: new Date().toISOString(),
       });
-    } catch (error) {
-      logger.error("Get current user error:", error);
+    } catch (error: any) {
       return next(error);
     }
   }
@@ -175,22 +163,18 @@ export class AuthController {
       // Validate input
       const validation = AuthValidation.validateForgotPassword({ email });
       if (!validation.isValid) {
-        return responseHelper.error(
-          res,
-          "Validation failed",
-          400,
-          validation.errors
-        );
+        return next(createHttpError(400, "Validation failed"));
       }
 
       // Check if user exists
       const user = await AuthService.findUserByEmail(email);
       if (!user) {
         // Don't reveal if email exists or not (security best practice)
-        return responseHelper.success(
-          res,
-          "If the email exists, a reset link has been sent"
-        );
+        return res.status(200).json({
+          success: true,
+          message: "If the email exists, a reset link has been sent",
+          timestamp: new Date().toISOString(),
+        });
       }
 
       // Generate password reset token
@@ -199,15 +183,13 @@ export class AuthController {
       // TODO: Send email with reset link (will implement email service later)
       logger.info(`Password reset requested for: ${email}`);
 
-      return responseHelper.success(
-        res,
-        "Password reset link sent to your email",
-        {
-          resetToken, // For development - remove in production
-        }
-      );
-    } catch (error) {
-      logger.error("Forgot password error:", error);
+      res.status(200).json({
+        success: true,
+        message: "Password reset link sent to your email",
+        data: { resetToken }, // For development only
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
       return next(error);
     }
   }
@@ -220,12 +202,7 @@ export class AuthController {
       // Validate input
       const validation = AuthValidation.validateResetPassword(resetData);
       if (!validation.isValid) {
-        return responseHelper.error(
-          res,
-          "Validation failed",
-          400,
-          validation.errors
-        );
+        return next(createHttpError(400, "Validation failed"));
       }
 
       // Verify reset token
@@ -237,7 +214,7 @@ export class AuthController {
       // Find user by email
       const user = await AuthService.findUserByEmail(email);
       if (!user) {
-        return responseHelper.error(res, "User not found", 404);
+        return next(createHttpError(404, "User not found"));
       }
 
       // Update user password
@@ -245,15 +222,12 @@ export class AuthController {
 
       logger.info(`Password reset successfully for: ${email}`);
 
-      return responseHelper.success(res, "Password reset successfully");
-    } catch (error) {
-      logger.error("Reset password error:", error);
-      const err = error as Error;
-
-      if (err.message === "Invalid or expired token") {
-        return responseHelper.error(res, "Invalid or expired reset token", 400);
-      }
-
+      res.status(200).json({
+        success: true,
+        message: "Password reset successfully",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
       return next(error);
     }
   }
@@ -267,18 +241,13 @@ export class AuthController {
       // Validate input
       const validation = AuthValidation.validateChangePassword(changeData);
       if (!validation.isValid) {
-        return responseHelper.error(
-          res,
-          "Validation failed",
-          400,
-          validation.errors
-        );
+        return next(createHttpError(400, "Validation failed"));
       }
 
       // Find user
       const user = await AuthService.findUserById(userId);
       if (!user) {
-        return responseHelper.error(res, "User not found", 404);
+        return next(createHttpError(404, "User not found"));
       }
 
       // Verify current password
@@ -288,7 +257,7 @@ export class AuthController {
       );
 
       if (!isCurrentPasswordValid) {
-        return responseHelper.error(res, "Current password is incorrect", 400);
+        return next(createHttpError(400, "Current password is incorrect"));
       }
 
       // Update password
@@ -296,9 +265,12 @@ export class AuthController {
 
       logger.info(`Password changed for user: ${user.email}`);
 
-      return responseHelper.success(res, "Password changed successfully");
-    } catch (error) {
-      logger.error("Change password error:", error);
+      res.status(200).json({
+        success: true,
+        message: "Password changed successfully",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
       return next(error);
     }
   }
@@ -311,12 +283,7 @@ export class AuthController {
       // Validate input
       const validation = AuthValidation.validateVerifyEmail({ token });
       if (!validation.isValid) {
-        return responseHelper.error(
-          res,
-          "Validation failed",
-          400,
-          validation.errors
-        );
+        return next(createHttpError(400, "Validation failed"));
       }
 
       // Verify email token
@@ -330,19 +297,12 @@ export class AuthController {
 
       logger.info(`Email verified for: ${email}`);
 
-      return responseHelper.success(res, "Email verified successfully");
-    } catch (error) {
-      logger.error("Verify email error:", error);
-      const err = error as Error;
-
-      if (err.message === "Invalid or expired token") {
-        return responseHelper.error(
-          res,
-          "Invalid or expired verification token",
-          400
-        );
-      }
-
+      res.status(200).json({
+        success: true,
+        message: "Email verified successfully",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
       return next(error);
     }
   }
