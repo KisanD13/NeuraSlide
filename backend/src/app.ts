@@ -4,7 +4,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import { config } from "./config/config";
-import { globalErrorHandler } from "./middlewares/globalErrorHandler";
+import globalErrorHandler from "./middlewares/globalErrorHandler";
 import { logger } from "./utils/logger";
 
 const app = express();
@@ -52,7 +52,7 @@ app.use((req, _res, next) => {
 // ========================================
 
 // Crystal routes (client-facing)
-// import authRouter from "./crystal/auth/authRouter";
+import authRouter from "./crystal/auth/authRouter";
 // import dashboardRouter from "./crystal/dashboard/dashboardRouter";
 // import automationRouter from "./crystal/automations/automationRouter";
 
@@ -99,7 +99,7 @@ app.get("/", (_req, res) => {
 // ========================================
 
 // Crystal routes (client-facing)
-// app.use("/crystal/auth", authRouter);
+app.use("/crystal/auth", authRouter);
 // app.use("/crystal/dashboard", dashboardRouter);
 // app.use("/crystal/automations", automationRouter);
 
