@@ -53,6 +53,7 @@ app.use((req, _res, next) => {
 
 // Crystal routes (client-facing)
 import authRouter from "./crystal/auth/authRouter";
+import instagramRouter from "./crystal/instagram/instagramRouter";
 // import dashboardRouter from "./crystal/dashboard/dashboardRouter";
 // import automationRouter from "./crystal/automations/automationRouter";
 
@@ -86,6 +87,7 @@ app.get("/", (_req, res) => {
         health: "/health",
         crystal: {
           auth: "/crystal/auth",
+          instagram: "/crystal/instagram",
           dashboard: "/crystal/dashboard",
           automations: "/crystal/automations",
         },
@@ -100,6 +102,7 @@ app.get("/", (_req, res) => {
 
 // Crystal routes (client-facing)
 app.use("/crystal/auth", authRouter);
+app.use("/crystal/instagram", instagramRouter);
 // app.use("/crystal/dashboard", dashboardRouter);
 // app.use("/crystal/automations", automationRouter);
 
