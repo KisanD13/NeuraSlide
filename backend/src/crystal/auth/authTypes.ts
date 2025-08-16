@@ -68,7 +68,7 @@ export interface JwtPayload {
   sub: string; // user ID
   email: string;
   role: UserRole;
-  teamId?: string;
+  teamId?: string | undefined;
   iat: number;
   exp: number;
 }
