@@ -2,6 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import createHttpError from "http-errors";
 import { config } from "../../config/config";
 import { logger } from "../../utils/logger";
 import {
@@ -12,7 +13,6 @@ import {
   AuthResponse,
   JwtPayload,
   UserRole,
-  ChangePasswordRequest,
 } from "./authTypes";
 
 export class AuthService {
@@ -24,7 +24,11 @@ export class AuthService {
       return hashedPassword;
     } catch (error) {
       logger.error("Error hashing password:", error);
-      throw new Error("Password hashing failed");
+
+      throw createHttpError(
+        500,
+        "Unable to process password. Please try again."
+      );
     }
   }
 
@@ -38,7 +42,10 @@ export class AuthService {
       return isMatch;
     } catch (error) {
       logger.error("Error comparing password:", error);
-      throw new Error("Password comparison failed");
+      throw createHttpError(
+        500,
+        "Unable to verify password. Please try again."
+      );
     }
   }
 
@@ -54,27 +61,50 @@ export class AuthService {
         exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60, // 7 days
       };
 
-      // FIXED CODE
-      const token = jwt.sign(payload, config.jwtSecret as string);
+      if (!config.jwtSecret) {
+        throw createHttpError(
+          500,
+          "Authentication service is not configured properly"
+        );
+      }
 
+      const token = jwt.sign(payload, config.jwtSecret);
       return token;
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Error generating JWT token:", error);
-      throw new Error("Token generation failed");
+      if (error.status) {
+        throw error; // Re-throw createHttpError
+      }
+      throw createHttpError(500, "Unable to create session. Please try again.");
     }
   }
 
   // Verify JWT token
   static verifyJwtToken(token: string): JwtPayload {
     try {
-      const decoded = jwt.verify(
-        token,
-        config.jwtSecret as string
-      ) as JwtPayload;
+      if (!config.jwtSecret) {
+        throw createHttpError(
+          500,
+          "Authentication service is not configured properly"
+        );
+      }
+
+      const decoded = jwt.verify(token, config.jwtSecret) as JwtPayload;
       return decoded;
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Error verifying JWT token:", error);
-      throw new Error("Invalid or expired token");
+
+      if (error.name === "TokenExpiredError") {
+        throw createHttpError(
+          401,
+          "Your session has expired. Please log in again."
+        );
+      }
+      if (error.name === "JsonWebTokenError") {
+        throw createHttpError(401, "Invalid session. Please log in again.");
+      }
+
+      throw createHttpError(401, "Authentication failed. Please log in again.");
     }
   }
 
@@ -88,11 +118,22 @@ export class AuthService {
         exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
       };
 
-      const token = jwt.sign(payload, config.jwtSecret as string);
+      if (!config.jwtSecret) {
+        throw createHttpError(500, "Email service is not configured properly");
+      }
+
+      const token = jwt.sign(payload, config.jwtSecret);
       return token;
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Error generating email verification token:", error);
-      throw new Error("Email verification token generation failed");
+      if (error.status) {
+        throw error;
+      }
+      
+      throw createHttpError(
+        500,
+        "Unable to send verification email. Please try again."
+      );
     }
   }
 
@@ -106,11 +147,24 @@ export class AuthService {
         exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour
       };
 
-      const token = jwt.sign(payload, config.jwtSecret as string);
+      if (!config.jwtSecret) {
+        throw createHttpError(
+          500,
+          "Password reset service is not configured properly"
+        );
+      }
+
+      const token = jwt.sign(payload, config.jwtSecret);
       return token;
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Error generating password reset token:", error);
-      throw new Error("Password reset token generation failed");
+      if (error.status) {
+        throw error;
+      }
+      throw createHttpError(
+        500,
+        "Unable to send password reset email. Please try again."
+      );
     }
   }
 
@@ -120,16 +174,98 @@ export class AuthService {
     expectedType: string
   ): { email: string } {
     try {
-      const decoded = jwt.verify(token, config.jwtSecret as string) as any;
+      if (!config.jwtSecret) {
+        throw createHttpError(
+          500,
+          "Verification service is not configured properly"
+        );
+      }
+
+      const decoded = jwt.verify(token, config.jwtSecret) as any;
 
       if (decoded.type !== expectedType) {
-        throw new Error("Invalid token type");
+        if (expectedType === "email_verification") {
+          throw createHttpError(
+            400,
+            "Invalid verification link. Please request a new one."
+          );
+        } else {
+          throw createHttpError(
+            400,
+            "Invalid reset link. Please request a new one."
+          );
+        }
       }
 
       return { email: decoded.email };
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Error verifying special token:", error);
-      throw new Error("Invalid or expired token");
+
+      if (error.status) {
+        throw error; // Re-throw createHttpError
+      }
+
+      if (error.name === "TokenExpiredError") {
+        if (expectedType === "email_verification") {
+          throw createHttpError(
+            400,
+            "Verification link has expired. Please request a new one."
+          );
+        } else {
+          throw createHttpError(
+            400,
+            "Reset link has expired. Please request a new one."
+          );
+        }
+      }
+
+      if (error.name === "JsonWebTokenError") {
+        if (expectedType === "email_verification") {
+          throw createHttpError(
+            400,
+            "Invalid verification link. Please request a new one."
+          );
+        } else {
+          throw createHttpError(
+            400,
+            "Invalid reset link. Please request a new one."
+          );
+        }
+      }
+
+      throw createHttpError(
+        400,
+        "Link is invalid or expired. Please try again."
+      );
+    }
+  }
+
+  // Authenticate user (login)
+  static async authenticateUser(loginData: LoginRequest): Promise<User> {
+    try {
+      const user = await this.findUserByEmail(loginData.email);
+
+      if (!user) {
+        throw createHttpError(401, "Invalid email or password");
+      }
+
+      const isPasswordValid = await this.comparePassword(
+        loginData.password,
+        user.password
+      );
+
+      if (!isPasswordValid) {
+        throw createHttpError(401, "Invalid email or password");
+      }
+
+      logger.info(`User authenticated successfully: ${user.email}`);
+      return user;
+    } catch (error: any) {
+      if (error.status) {
+        throw error; // Re-throw createHttpError
+      }
+      logger.error("Error authenticating user:", error);
+      throw createHttpError(500, "Unable to sign in. Please try again.");
     }
   }
 
@@ -138,13 +274,11 @@ export class AuthService {
     signupData: SignupRequest
   ): Promise<{ user: User; team?: Team }> {
     try {
-      // Hash password
       const hashedPassword = await this.hashPassword(signupData.password);
 
       // TODO: Replace with actual database operations
-      // This is a placeholder - will be replaced with Prisma operations
       const newUser: User = {
-        id: "generated-user-id", // Will be generated by database
+        id: "generated-user-id",
         email: signupData.email,
         password: hashedPassword,
         name: signupData.name,
@@ -154,11 +288,11 @@ export class AuthService {
         updatedAt: new Date(),
       };
 
-      let newTeam: Team | undefined;
+      let newTeam: Team | undefined = undefined;
 
       if (signupData.teamName) {
         newTeam = {
-          id: "generated-team-id", // Will be generated by database
+          id: "generated-team-id",
           name: signupData.teamName,
           ownerId: newUser.id,
           plan: "free",
@@ -171,61 +305,64 @@ export class AuthService {
 
       logger.info(`User created successfully: ${newUser.email}`);
 
-      // FIXED CODE
       const result: { user: User; team?: Team } = {
         user: newUser,
         ...(newTeam && { team: newTeam }),
       };
+
       return result;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.status) {
+        throw error; // Re-throw createHttpError
+      }
       logger.error("Error creating user and team:", error);
-      throw new Error("User creation failed");
-    }
-  }
-
-  // Authenticate user (login)
-  static async authenticateUser(loginData: LoginRequest): Promise<User> {
-    try {
-      // TODO: Replace with actual database query
-      // This is a placeholder - will be replaced with Prisma operations
-      const user = await this.findUserByEmail(loginData.email);
-
-      if (!user) {
-        throw new Error("User not found");
-      }
-
-      const isPasswordValid = await this.comparePassword(
-        loginData.password,
-        user.password
-      );
-
-      if (!isPasswordValid) {
-        throw new Error("Invalid password");
-      }
-
-      logger.info(`User authenticated successfully: ${user.email}`);
-
-      return user;
-    } catch (error) {
-      logger.error("Error authenticating user:", error);
-      throw error;
+      throw createHttpError(500, "Unable to create account. Please try again.");
     }
   }
 
   // Find user by email (placeholder)
   static async findUserByEmail(email: string): Promise<User | null> {
-    // TODO: Replace with actual Prisma database query
-    // This is a placeholder
-    logger.info(`Looking up user by email: ${email}`);
-    return null;
+    try {
+      // TODO: Replace with actual Prisma database query
+      logger.info(`Looking up user by email: ${email}`);
+      return null;
+    } catch (error: any) {
+      logger.error("Error finding user by email:", error);
+      throw createHttpError(
+        500,
+        "Unable to access user data. Please try again."
+      );
+    }
   }
 
   // Find user by ID (placeholder)
   static async findUserById(id: string): Promise<User | null> {
-    // TODO: Replace with actual Prisma database query
-    // This is a placeholder
-    logger.info(`Looking up user by ID: ${id}`);
-    return null;
+    try {
+      // TODO: Replace with actual Prisma database query
+      logger.info(`Looking up user by ID: ${id}`);
+      return null;
+    } catch (error: any) {
+      logger.error("Error finding user by ID:", error);
+      throw createHttpError(
+        500,
+        "Unable to access user data. Please try again."
+      );
+    }
+  }
+
+  // Find team by ID (placeholder)
+  static async findTeamById(teamId: string): Promise<Team | null> {
+    try {
+      // TODO: Replace with actual Prisma database query
+      logger.info(`Looking up team by ID: ${teamId}`);
+      return null;
+    } catch (error: any) {
+      logger.error("Error finding team by ID:", error);
+      throw createHttpError(
+        500,
+        "Unable to access team data. Please try again."
+      );
+    }
   }
 
   // Update user password
@@ -234,14 +371,19 @@ export class AuthService {
     newPassword: string
   ): Promise<void> {
     try {
-      const hashedPassword = await this.hashPassword(newPassword);
+      await this.hashPassword(newPassword);
 
       // TODO: Replace with actual Prisma database update
-      // This is a placeholder
       logger.info(`Password updated for user: ${userId}`);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.status) {
+        throw error;
+      }
       logger.error("Error updating user password:", error);
-      throw new Error("Password update failed");
+      throw createHttpError(
+        500,
+        "Unable to update password. Please try again."
+      );
     }
   }
 
@@ -249,11 +391,10 @@ export class AuthService {
   static async markEmailAsVerified(email: string): Promise<void> {
     try {
       // TODO: Replace with actual Prisma database update
-      // This is a placeholder
       logger.info(`Email verified for user: ${email}`);
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Error marking email as verified:", error);
-      throw new Error("Email verification failed");
+      throw createHttpError(500, "Unable to verify email. Please try again.");
     }
   }
 
@@ -261,21 +402,12 @@ export class AuthService {
   static createAuthResponse(user: User, team?: Team): AuthResponse {
     const token = this.generateJwtToken(user, team);
 
-    // Remove password from user object
     const { password, ...userWithoutPassword } = user;
 
     return {
       user: userWithoutPassword,
-      team: team as Team, // Ensure 'team' is always of type Team (not undefined)
+      team: team as Team, // Ensure team is always of type Team (even if undefined)
       accessToken: token,
     };
-  }
-
-  // Add this to AuthService class in authService.ts
-  static async findTeamById(teamId: string): Promise<Team | null> {
-    // TODO: Replace with actual Prisma database query
-    // This is a placeholder
-    logger.info(`Looking up team by ID: ${teamId}`);
-    return null;
   }
 }
