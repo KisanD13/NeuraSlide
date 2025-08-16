@@ -270,4 +270,12 @@ export class AuthService {
       accessToken: token,
     };
   }
+
+  // Add this to AuthService class in authService.ts
+  static async findTeamById(teamId: string): Promise<Team | null> {
+    // TODO: Replace with actual Prisma database query
+    // This is a placeholder
+    logger.info(`Looking up team by ID: ${teamId}`);
+    return null;
+  }
 }
