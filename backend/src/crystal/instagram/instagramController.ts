@@ -6,7 +6,6 @@ import { InstagramService } from "./instagramService";
 import { InstagramValidation } from "./instagramValidation";
 import {
   ConnectInstagramRequest,
-  RefreshTokenRequest,
   InstagramOAuthCallback,
 } from "./instagramTypes";
 import { logger } from "../../utils/logger";
@@ -52,8 +51,8 @@ export class InstagramController {
   ) {
     try {
       const callbackData: InstagramOAuthCallback = {
-        code: req.query['code'] as string,
-        state: req.query['state'] as string,
+        code: req.query["code"] as string,
+        state: req.query["state"] as string,
       };
 
       // Validate callback data
