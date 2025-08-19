@@ -16,10 +16,10 @@ import {
   VerifyEmailRequest,
 } from "./authTypes";
 
-export interface ValidationResult {
+export type ValidationResult = {
   isValid: boolean;
   errors: string[];
-}
+};
 
 export class AuthValidation {
   // Validate signup request

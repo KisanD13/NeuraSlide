@@ -1,6 +1,6 @@
 // backend/src/crystal/auth/authTypes.ts
 
-export interface User {
+export type User = {
   id: string;
   email: string;
   password: string;
@@ -10,74 +10,70 @@ export interface User {
   teamId?: string;
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
-export interface Team {
+export type Team = {
   id: string;
   name: string;
   ownerId: string;
   plan: SubscriptionPlan;
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
 export type UserRole = "owner" | "admin" | "member" | "viewer";
 
 export type SubscriptionPlan = "free" | "basic" | "pro" | "enterprise";
 
-// Request/Response interfaces
-export interface SignupRequest {
+// Request/Response types
+export type SignupRequest = {
   email: string;
   password: string;
   name: string;
   teamName?: string;
-}
+};
 
-export interface LoginRequest {
+export type LoginRequest = {
   email: string;
   password: string;
-}
+};
 
-export interface AuthResponse {
+export type AuthResponse = {
   user: Omit<User, "password">;
   team?: Team;
   accessToken: string;
   refreshToken?: string;
-}
+};
 
-export interface ForgotPasswordRequest {
+export type ForgotPasswordRequest = {
   email: string;
-}
+};
 
-export interface ResetPasswordRequest {
+export type ResetPasswordRequest = {
   token: string;
   newPassword: string;
-}
+};
 
-export interface ChangePasswordRequest {
+export type ChangePasswordRequest = {
   currentPassword: string;
   newPassword: string;
-}
+};
 
-export interface VerifyEmailRequest {
+export type VerifyEmailRequest = {
   token: string;
-}
+};
 
-// JWT Payload interface
-export interface JwtPayload {
+// JWT Payload type
+export type JwtPayload = {
   sub: string; // user ID
   email: string;
   role: UserRole;
   teamId?: string | undefined;
   iat: number;
   exp: number;
-}
+};
 
-// Database model interfaces (for Prisma)
-export interface UserModel extends Omit<User, "id"> {
-  _id: string;
-}
+// Database model types (for Prisma)
+export type UserModel = Omit<User, "id">;
 
-export interface TeamModel extends Omit<Team, "id"> {
-  _id: string;
-}
+export type TeamModel = Omit<Team, "id">;

@@ -1,6 +1,6 @@
 // backend/src/crystal/conversations/conversationTypes.ts
 
-export interface Conversation {
+export type Conversation = {
   id: string;
   userId: string;
   instagramAccountId: string;
@@ -19,9 +19,9 @@ export interface Conversation {
   priority: ConversationPriority;
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
-export interface Message {
+export type Message = {
   id: string;
   conversationId: string;
   externalMessageId: string; // Instagram message ID
@@ -35,26 +35,26 @@ export interface Message {
   metadata?: Record<string, any> | null;
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
-export interface SendMessageRequest {
+export type SendMessageRequest = {
   conversationId: string;
   text: string;
   mediaUrls?: string[];
   messageType?: MessageType | undefined;
   metadata?: Record<string, any>;
-}
+};
 
-export interface ReplyMessageRequest {
+export type ReplyMessageRequest = {
   conversationId: string;
   messageId: string;
   text: string;
   mediaUrls?: string[];
   messageType?: MessageType;
   metadata?: Record<string, any>;
-}
+};
 
-export interface ConversationListRequest {
+export type ConversationListRequest = {
   page?: number;
   limit?: number;
   status?: ConversationStatus;
@@ -63,9 +63,9 @@ export interface ConversationListRequest {
   search?: string;
   sortBy?: "lastMessageAt" | "createdAt" | "priority";
   sortOrder?: "asc" | "desc";
-}
+};
 
-export interface ConversationListResponse {
+export type ConversationListResponse = {
   conversations: Conversation[];
   pagination: {
     page: number;
@@ -75,17 +75,17 @@ export interface ConversationListResponse {
     hasNext: boolean;
     hasPrev: boolean;
   };
-}
+};
 
-export interface MessageListRequest {
+export type MessageListRequest = {
   conversationId: string;
   page?: number;
   limit?: number;
   before?: Date | undefined;
   after?: Date | undefined;
-}
+};
 
-export interface MessageListResponse {
+export type MessageListResponse = {
   messages: Message[];
   pagination: {
     page: number;
@@ -95,9 +95,9 @@ export interface MessageListResponse {
     hasNext: boolean;
     hasPrev: boolean;
   };
-}
+};
 
-export interface ConversationStats {
+export type ConversationStats = {
   totalConversations: number;
   activeConversations: number;
   automatedConversations: number;
@@ -106,7 +106,7 @@ export interface ConversationStats {
   todayMessages: number;
   thisWeekMessages: number;
   thisMonthMessages: number;
-}
+};
 
 // Enums - using string literals to match Prisma
 export enum ConversationStatus {

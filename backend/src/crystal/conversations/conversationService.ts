@@ -1,6 +1,8 @@
 // backend/src/crystal/conversations/conversationService.ts
 
 import { PrismaClient } from "@prisma/client";
+import createHttpError from "http-errors";
+
 import {
   Conversation,
   Message,
@@ -145,7 +147,11 @@ export class ConversationService {
       };
     } catch (error: any) {
       logger.error("Error getting conversations:", error);
-      throw error;
+
+      throw createHttpError(
+        500,
+        "Failed to retrieve conversations. Please try again."
+      );
     }
   }
 
@@ -197,7 +203,11 @@ export class ConversationService {
       };
     } catch (error: any) {
       logger.error("Error getting conversation:", error);
-      throw error;
+
+      throw createHttpError(
+        500,
+        "Failed to retrieve conversation. Please try again."
+      );
     }
   }
 
@@ -213,7 +223,7 @@ export class ConversationService {
       // Verify conversation belongs to user
       const conversation = await this.getConversation(userId, conversationId);
       if (!conversation) {
-        throw new Error("Conversation not found");
+        throw createHttpError(404, "Conversation not found");
       }
 
       const { page = 1, limit = 50, before, after } = filters;
@@ -284,7 +294,10 @@ export class ConversationService {
       };
     } catch (error: any) {
       logger.error("Error getting messages:", error);
-      throw error;
+      throw createHttpError(
+        500,
+        "Failed to retrieve messages. Please try again."
+      );
     }
   }
 
@@ -301,8 +314,9 @@ export class ConversationService {
 
       // Verify conversation belongs to user
       const conversation = await this.getConversation(userId, conversationId);
+
       if (!conversation) {
-        throw new Error("Conversation not found");
+        throw createHttpError(404, "Conversation not found");
       }
 
       // Create message in database
@@ -359,7 +373,8 @@ export class ConversationService {
       };
     } catch (error: any) {
       logger.error("Error sending message:", error);
-      throw error;
+
+      throw createHttpError(500, "Failed to send message. Please try again.");
     }
   }
 
@@ -383,7 +398,7 @@ export class ConversationService {
       // Verify conversation belongs to user
       const conversation = await this.getConversation(userId, conversationId);
       if (!conversation) {
-        throw new Error("Conversation not found");
+        throw createHttpError(404, "Conversation not found");
       }
 
       // Verify message exists
@@ -395,7 +410,7 @@ export class ConversationService {
       });
 
       if (!originalMessage) {
-        throw new Error("Message not found");
+        throw createHttpError(404, "Message not found");
       }
 
       // Create reply message
@@ -422,7 +437,8 @@ export class ConversationService {
       return replyMessage;
     } catch (error: any) {
       logger.error("Error replying to message:", error);
-      throw error;
+
+      throw createHttpError(500, "Failed to send reply. Please try again.");
     }
   }
 
@@ -497,7 +513,11 @@ export class ConversationService {
       };
     } catch (error: any) {
       logger.error("Error getting conversation stats:", error);
-      throw error;
+
+      throw createHttpError(
+        500,
+        "Failed to retrieve conversation statistics. Please try again."
+      );
     }
   }
 
@@ -512,8 +532,9 @@ export class ConversationService {
     try {
       // Verify conversation belongs to user
       const conversation = await this.getConversation(userId, conversationId);
+
       if (!conversation) {
-        throw new Error("Conversation not found");
+        throw createHttpError(404, "Conversation not found");
       }
 
       const updatedConversation = await prisma.conversation.update({
@@ -554,7 +575,11 @@ export class ConversationService {
       };
     } catch (error: any) {
       logger.error("Error updating conversation status:", error);
-      throw error;
+
+      throw createHttpError(
+        500,
+        "Failed to update conversation status. Please try again."
+      );
     }
   }
 
@@ -569,8 +594,9 @@ export class ConversationService {
     try {
       // Verify conversation belongs to user
       const conversation = await this.getConversation(userId, conversationId);
+
       if (!conversation) {
-        throw new Error("Conversation not found");
+        throw createHttpError(404, "Conversation not found");
       }
 
       // Merge existing tags with new tags
@@ -617,7 +643,8 @@ export class ConversationService {
       };
     } catch (error: any) {
       logger.error("Error adding tags to conversation:", error);
-      throw error;
+
+      throw createHttpError(500, "Failed to add tags. Please try again.");
     }
   }
 }
