@@ -30,6 +30,10 @@ model User {
   conversations Conversation[]
   products  Product[]     // All products for this user
   jobLogs   JobLog[]     // All job executions for this user
+  aiResponses AIResponse[]     // All AI responses for this user
+  aiConversations AIConversation[]     // All AI conversations for this user
+  aiTrainingData AITrainingData[]     // All AI training data for this user
+  campaigns Campaign[]     // All campaigns for this user
 
   @@map("users")
 }
@@ -296,4 +300,136 @@ enum ProductAvailability {
   OUT_OF_STOCK
   PRE_ORDER
   DISCONTINUED
+}
+
+// AI Models
+model AIResponse {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  conversationId String? @db.ObjectId
+  message      String
+  response     String
+  model        String
+  tokensUsed   Int
+  responseTime Int      // in milliseconds
+  confidence   Float
+  metadata     Json?    // Store AI response metadata
+  createdAt    DateTime @default(now())
+
+  // Relations
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation AIConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@map("ai_responses")
+}
+
+model AIConversation {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  title     String
+  summary   String?
+  tags      String[] @default([])
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  AIMessage[]
+  responses AIResponse[]
+
+  @@map("ai_conversations")
+}
+
+model AIMessage {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String   @db.ObjectId
+  role           String   // "user", "assistant", "system"
+  content        String
+  timestamp      DateTime @default(now())
+  metadata       Json?    // Store message metadata
+
+  // Relations
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("ai_messages")
+}
+
+model AITrainingData {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  input           String
+  expectedOutput  String
+  category        String
+  tags            String[] @default([])
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  // Relations
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_training_data")
+}
+
+// Campaign Models
+model Campaign {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  name        String
+  description String?
+  type        Json     // Store campaign type as JSON
+  status      Json     // Store campaign status as JSON
+  isActive    Boolean  @default(true)
+  settings    Json     // Store campaign settings as JSON
+  metadata    Json?    // Store campaign metadata as JSON
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  faqs        FAQ[]
+  responses   CampaignResponse[]
+
+  @@map("campaigns")
+}
+
+model FAQ {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId  String   @db.ObjectId
+  question    String
+  answer      String
+  category    String
+  tags        String[] @default([])
+  priority    Json     // Store FAQ priority as JSON
+  isActive    Boolean  @default(true)
+  usageCount  Int      @default(0)
+  lastUsed    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  responses   CampaignResponse[]
+
+  @@map("faqs")
+}
+
+model CampaignResponse {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId     String   @db.ObjectId
+  conversationId String
+  faqId          String?  @db.ObjectId
+  userMessage    String
+  botResponse    String
+  responseType   String   // "FAQ", "AUTO", "MANUAL", "FALLBACK"
+  confidence     Float
+  responseTime   Int      // in milliseconds
+  metadata       Json?    // Store response metadata as JSON
+  createdAt      DateTime @default(now())
+
+  // Relations
+  campaign       Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  faq            FAQ? @relation(fields: [faqId], references: [id], onDelete: SetNull)
+
+  @@map("campaign_responses")
 }
