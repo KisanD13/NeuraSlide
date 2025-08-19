@@ -28,6 +28,7 @@ model User {
   teams     TeamMember[]
   automations Automation[]
   conversations Conversation[]
+  products  Product[]     // All products for this user
   jobLogs   JobLog[]     // All job executions for this user
 
   @@map("users")
@@ -158,6 +159,29 @@ model Message {
   @@map("messages")
 }
 
+model Product {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
+  name          String
+  description   String
+  category      String
+  price         Float
+  currency      String   @default("USD")
+  images        String[] @default([])
+  tags          String[] @default([])
+  specifications Json    // Store product specifications as JSON
+  availability  ProductAvailability @default(IN_STOCK)
+  metadata      Json?    // Store additional product metadata
+  searchCount   Int      @default(0) // Track how many times this product was searched
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("products")
+}
+
 model JobLog {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   jobType      JobType
@@ -265,4 +289,11 @@ enum AutomationPriority {
   MEDIUM
   HIGH
   URGENT
+}
+
+enum ProductAvailability {
+  IN_STOCK
+  OUT_OF_STOCK
+  PRE_ORDER
+  DISCONTINUED
 }

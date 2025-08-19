@@ -56,6 +56,7 @@ import authRouter from "./crystal/auth/authRouter";
 import instagramRouter from "./crystal/instagram/instagramRouter";
 import conversationRouter from "./crystal/conversations/conversationRouter";
 import automationRouter from "./crystal/automations/automationRouter";
+import productRouter from "./crystal/products/productRouter";
 // import dashboardRouter from "./crystal/dashboard/dashboardRouter";
 
 // ========================================
@@ -90,8 +91,9 @@ app.get("/", (_req, res) => {
           auth: "/crystal/auth",
           instagram: "/crystal/instagram",
           conversations: "/crystal/conversations",
-          dashboard: "/crystal/dashboard",
           automations: "/crystal/automations",
+          products: "/crystal/products",
+          dashboard: "/crystal/dashboard",
         },
       },
     },
@@ -107,6 +109,7 @@ app.use("/crystal/auth", authRouter);
 app.use("/crystal/instagram", instagramRouter);
 app.use("/crystal/conversations", conversationRouter);
 app.use("/crystal/automations", automationRouter);
+app.use("/crystal/products", productRouter);
 // app.use("/crystal/dashboard", dashboardRouter);
 
 // ========================================
