@@ -26,8 +26,7 @@ model User {
 
   // Relations
   teams     TeamMember[]
-  createdAtAutomations Automation[] @relation("CreatedBy")
-  updatedAtAutomations Automation[] @relation("UpdatedBy")
+  automations Automation[]
   conversations Conversation[]
 
   @@map("users")
@@ -44,7 +43,6 @@ model Team {
   // Relations
   members     TeamMember[]
   instagramAccounts InstagramAccount[]
-  automations Automation[]
 
   @@map("teams")
 }
@@ -80,33 +78,28 @@ model InstagramAccount {
   // Relations
   team         Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
   conversations Conversation[]
-  automations  Automation[]
 
   @@map("instagram_accounts")
 }
 
 model Automation {
-  id          String        @id @default(auto()) @map("_id") @db.ObjectId
-  teamId      String        @db.ObjectId
-  instagramAccountId String? @db.ObjectId
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
   name        String
   description String?
-  triggerType TriggerType
-  conditions  Json          // Store trigger conditions as JSON
-  actions     Json          // Store automation actions as JSON
-  isActive    Boolean       @default(true)
-  isAIAutopilot Boolean     @default(false)
-  aiSettings  Json?         // AI autopilot settings
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  createdBy   String        @db.ObjectId
-  updatedBy   String        @db.ObjectId
+  trigger     Json     // Store trigger configuration as JSON
+  response    Json     // Store response configuration as JSON
+  status      AutomationStatus @default(DRAFT)
+  priority    AutomationPriority @default(MEDIUM)
+  isActive    Boolean  @default(false)
+  tags        String[] @default([])
+  conditions  Json     // Store additional conditions as JSON
+  performance Json     // Store performance metrics as JSON
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  team        Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  instagramAccount InstagramAccount? @relation(fields: [instagramAccountId], references: [id], onDelete: SetNull)
-  creator     User @relation("CreatedBy", fields: [createdBy], references: [id])
-  updater     User @relation("UpdatedBy", fields: [updatedBy], references: [id])
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
   conversations Conversation[]
 
   @@map("automations")
@@ -135,8 +128,8 @@ model Conversation {
   // Relations
   user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
   instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
-  messages      Message[]
   automation    Automation? @relation(fields: [automationId], references: [id], onDelete: SetNull)
+  messages      Message[]
 
   @@unique([instagramAccountId, externalConversationId])
   @@map("conversations")
@@ -249,4 +242,17 @@ enum JobStatus {
   COMPLETED
   FAILED
   CANCELLED
+}
+
+enum AutomationStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+}
+
+enum AutomationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }
