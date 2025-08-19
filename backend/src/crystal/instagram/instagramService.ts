@@ -3,6 +3,7 @@
 import createHttpError from "http-errors";
 import { config } from "../../config/config";
 import { logger } from "../../utils/logger";
+import { prisma } from "../../config/db";
 import {
   InstagramAccount,
   InstagramOAuthUrl,
@@ -485,49 +486,183 @@ export class InstagramService {
   private static async saveInstagramAccount(
     account: InstagramAccount
   ): Promise<InstagramAccount> {
-    // TODO: Implement with Prisma
-    logger.info("Placeholder: Save Instagram account to database");
-    return account;
+    try {
+      // Map InstagramAccount interface to Prisma schema
+      const savedAccount = await prisma.instagramAccount.create({
+        data: {
+          teamId: account.userId, // Using userId as teamId for now
+          igUserId: account.instagramId,
+          igUsername: account.username,
+          accessToken: account.accessToken,
+          refreshToken: null, // Not in interface
+          expiresAt: account.expiresAt || null,
+          isActive: account.isActive,
+          meta: account.metadata
+            ? JSON.parse(JSON.stringify(account.metadata))
+            : null,
+        },
+      });
+
+      // Transform back to interface
+      return {
+        id: savedAccount.id,
+        userId: savedAccount.teamId, // Map back
+        instagramId: savedAccount.igUserId,
+        username: savedAccount.igUsername,
+        name: undefined,
+        profilePictureUrl: undefined,
+        accessToken: savedAccount.accessToken,
+        tokenType: "user",
+        expiresAt: savedAccount.expiresAt || undefined,
+        scopes: [],
+        isActive: savedAccount.isActive,
+        connectedAt: savedAccount.createdAt,
+        lastSyncAt: savedAccount.updatedAt || undefined,
+        metadata: savedAccount.meta as any,
+      };
+    } catch (error: any) {
+      logger.error("Error saving Instagram account:", error);
+      throw createHttpError(500, "Failed to save Instagram account");
+    }
   }
 
   private static async findAccountsByUserId(
     userId: string
   ): Promise<InstagramAccount[]> {
-    // TODO: Implement with Prisma
-    logger.info(`Placeholder: Find Instagram accounts for user: ${userId}`);
-    return [];
+    try {
+      const accounts = await prisma.instagramAccount.findMany({
+        where: { teamId: userId }, // Using userId as teamId
+      });
+
+      return accounts.map((account) => ({
+        id: account.id,
+        userId: account.teamId,
+        instagramId: account.igUserId,
+        username: account.igUsername,
+        name: undefined,
+        profilePictureUrl: undefined,
+        accessToken: account.accessToken,
+        tokenType: "user" as const,
+        expiresAt: account.expiresAt || undefined,
+        scopes: [],
+        isActive: account.isActive,
+        connectedAt: account.createdAt,
+        lastSyncAt: account.updatedAt || undefined,
+        metadata: account.meta as any,
+      }));
+    } catch (error: any) {
+      logger.error("Error finding Instagram accounts by user ID:", error);
+      throw createHttpError(500, "Failed to fetch Instagram accounts");
+    }
   }
 
   private static async findAccountById(
     accountId: string
   ): Promise<InstagramAccount | null> {
-    // TODO: Implement with Prisma
-    logger.info(`Placeholder: Find Instagram account by ID: ${accountId}`);
-    return null;
+    try {
+      const account = await prisma.instagramAccount.findUnique({
+        where: { id: accountId },
+      });
+
+      if (!account) {
+        return null;
+      }
+
+      return {
+        id: account.id,
+        userId: account.teamId,
+        instagramId: account.igUserId,
+        username: account.igUsername,
+        name: undefined,
+        profilePictureUrl: undefined,
+        accessToken: account.accessToken,
+        tokenType: "user" as const,
+        expiresAt: account.expiresAt || undefined,
+        scopes: [],
+        isActive: account.isActive,
+        connectedAt: account.createdAt,
+        lastSyncAt: account.updatedAt || undefined,
+        metadata: account.meta as any,
+      };
+    } catch (error: any) {
+      logger.error("Error finding Instagram account by ID:", error);
+      throw createHttpError(500, "Failed to fetch Instagram account");
+    }
   }
 
   private static async findAccountByInstagramId(
     instagramId: string
   ): Promise<InstagramAccount | null> {
-    // TODO: Implement with Prisma
-    logger.info(
-      `Placeholder: Find Instagram account by Instagram ID: ${instagramId}`
-    );
-    return null;
+    try {
+      const account = await prisma.instagramAccount.findUnique({
+        where: { igUserId: instagramId },
+      });
+
+      if (!account) {
+        return null;
+      }
+
+      return {
+        id: account.id,
+        userId: account.teamId,
+        instagramId: account.igUserId,
+        username: account.igUsername,
+        name: undefined,
+        profilePictureUrl: undefined,
+        accessToken: account.accessToken,
+        tokenType: "user" as const,
+        expiresAt: account.expiresAt || undefined,
+        scopes: [],
+        isActive: account.isActive,
+        connectedAt: account.createdAt,
+        lastSyncAt: account.updatedAt || undefined,
+        metadata: account.meta as any,
+      };
+    } catch (error: any) {
+      logger.error("Error finding Instagram account by Instagram ID:", error);
+      throw createHttpError(500, "Failed to fetch Instagram account");
+    }
   }
 
   private static async updateInstagramAccount(
     accountId: string,
-    _updates: Partial<InstagramAccount>
+    updates: Partial<InstagramAccount>
   ): Promise<void> {
-    // TODO: Implement with Prisma
-    logger.info(`Placeholder: Update Instagram account: ${accountId}`);
+    try {
+      const updateData: any = {};
+
+      if (updates.username) updateData.igUsername = updates.username;
+      if (updates.accessToken) updateData.accessToken = updates.accessToken;
+      if (updates.expiresAt) updateData.expiresAt = updates.expiresAt;
+      if (updates.isActive !== undefined)
+        updateData.isActive = updates.isActive;
+      if (updates.metadata)
+        updateData.meta = JSON.parse(JSON.stringify(updates.metadata));
+
+      await prisma.instagramAccount.update({
+        where: { id: accountId },
+        data: updateData,
+      });
+
+      logger.info(`Updated Instagram account: ${accountId}`);
+    } catch (error: any) {
+      logger.error("Error updating Instagram account:", error);
+      throw createHttpError(500, "Failed to update Instagram account");
+    }
   }
 
   private static async deleteInstagramAccount(
     accountId: string
   ): Promise<void> {
-    // TODO: Implement with Prisma
-    logger.info(`Placeholder: Delete Instagram account: ${accountId}`);
+    try {
+      await prisma.instagramAccount.delete({
+        where: { id: accountId },
+      });
+
+      logger.info(`Deleted Instagram account: ${accountId}`);
+    } catch (error: any) {
+      logger.error("Error deleting Instagram account:", error);
+      throw createHttpError(500, "Failed to delete Instagram account");
+    }
   }
 }

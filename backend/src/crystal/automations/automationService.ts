@@ -3,6 +3,7 @@
 import { prisma } from "../../config/db";
 import { logger } from "../../utils/logger";
 import createHttpError from "http-errors";
+import { config } from "../../config/config";
 import {
   Automation,
   CreateAutomationRequest,
@@ -533,23 +534,63 @@ export class AutomationService {
     _context: any
   ): Promise<string> {
     try {
-      // TODO: Integrate with OpenAI API
-      // For now, return a placeholder response
       const prompt = response.prompt;
       const maxLength = response.maxLength || 200;
+      // const temperature = response.temperature || 0.7;
 
-      // Simple AI response generation (replace with actual OpenAI call)
-      let aiResponse = `AI Response: ${prompt}\n\nBased on the message: "${message}"\n\nThis is a placeholder AI response. Replace with actual OpenAI integration.`;
-
-      if (aiResponse.length > maxLength) {
-        aiResponse = aiResponse.substring(0, maxLength) + "...";
+      // Check if OpenAI API key is configured
+      if (!config.openaiApiKey) {
+        logger.warn("OpenAI API key not configured, using fallback response");
+        return this.generateFallbackResponse(prompt, message, maxLength);
       }
 
-      return aiResponse;
+      // TODO: Implement actual OpenAI API call
+      // This is a placeholder for the OpenAI integration
+      // In production, you would use:
+      // const openai = new OpenAI({ apiKey: config.openaiApiKey });
+      // const completion = await openai.chat.completions.create({
+      //   model: "gpt-3.5-turbo",
+      //   messages: [
+      //     { role: "system", content: prompt },
+      //     { role: "user", content: message }
+      //   ],
+      //   max_tokens: maxLength,
+      //   temperature: temperature
+      // });
+      // return completion.choices[0].message.content;
+
+      // For now, generate a more realistic placeholder response
+      return this.generateFallbackResponse(prompt, message, maxLength);
     } catch (error: any) {
       logger.error("AI response generation error:", error);
       throw createHttpError(500, "Failed to generate AI response");
     }
+  }
+
+  private static generateFallbackResponse(
+    prompt: string,
+    message: string,
+    maxLength: number
+  ): string {
+    const responses = [
+      "Thank you for your message! I understand you're asking about this. Let me help you with that.",
+      "I appreciate you reaching out. Based on what you've shared, here's what I can tell you.",
+      "Thanks for contacting us! I'd be happy to assist you with your inquiry.",
+      "Hello! I see your message and I'm here to help. Let me provide you with some information.",
+      "Thank you for getting in touch! I understand your question and here's my response.",
+    ];
+
+    const randomResponse =
+      responses[Math.floor(Math.random() * responses.length)];
+    const contextInfo = `[Context: ${prompt}] [Message: ${message}]`;
+
+    let result = `${randomResponse} ${contextInfo}`;
+
+    if (result.length > maxLength) {
+      result = result.substring(0, maxLength - 3) + "...";
+    }
+
+    return result;
   }
 
   private static async generateTemplateResponse(
