@@ -593,4 +593,25 @@ export class AutomationValidation {
       errors,
     };
   }
+
+  // ========================================
+  // ID VALIDATION
+  // ========================================
+
+  static validateId(id: string): ValidationResult {
+    const errors: string[] = [];
+
+    if (!id || typeof id !== "string") {
+      errors.push("ID is required and must be a string");
+    }
+
+    if (id && id.trim().length === 0) {
+      errors.push("ID cannot be empty");
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
 }

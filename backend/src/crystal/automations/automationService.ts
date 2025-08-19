@@ -765,6 +765,101 @@ export class AutomationService {
     }
   }
 
+  // Toggle automation status (enable/disable)
+  static async toggleAutomationStatus(
+    userId: string,
+    automationId: string
+  ): Promise<Automation> {
+    try {
+      // Get current automation
+      const automation = await prisma.automation.findFirst({
+        where: { id: automationId, userId },
+      });
+
+      if (!automation) {
+        throw createHttpError(404, "Automation not found");
+      }
+
+      // Toggle status
+      const newStatus = automation.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+      const isActive = newStatus === "ACTIVE";
+
+      const updatedAutomation = await prisma.automation.update({
+        where: { id: automationId },
+        data: {
+          status: newStatus,
+          isActive,
+        },
+      });
+
+      return this.transformToAutomation(updatedAutomation);
+    } catch (error: any) {
+      logger.error("Toggle automation status error:", error);
+      if (error.status) {
+        throw error;
+      }
+      throw createHttpError(500, "Failed to toggle automation status");
+    }
+  }
+
+  // Get specific automation performance
+  static async getAutomationPerformance(
+    userId: string,
+    automationId: string
+  ): Promise<any> {
+    try {
+      const automation = await prisma.automation.findFirst({
+        where: { id: automationId, userId },
+      });
+
+      if (!automation) {
+        throw createHttpError(404, "Automation not found");
+      }
+
+      // Get conversation count for this automation
+      const conversationCount = await prisma.conversation.count({
+        where: { automationId },
+      });
+
+      // Get recent executions (last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const recentExecutions = await prisma.jobLog.count({
+        where: {
+          automationId,
+          runAt: {
+            gte: thirtyDaysAgo,
+          },
+        },
+      });
+
+      const performance = automation.performance as any;
+
+      return {
+        automationId,
+        name: automation.name,
+        status: automation.status,
+        performance: {
+          totalTriggers: performance.totalTriggers || 0,
+          successfulResponses: performance.successfulResponses || 0,
+          failedResponses: performance.failedResponses || 0,
+          averageResponseTime: performance.averageResponseTime || 0,
+          successRate: performance.successRate || 0,
+          conversationCount,
+          recentExecutions,
+        },
+        lastExecuted: automation.updatedAt.toISOString(),
+      };
+    } catch (error: any) {
+      logger.error("Get automation performance error:", error);
+      if (error.status) {
+        throw error;
+      }
+      throw createHttpError(500, "Failed to fetch automation performance");
+    }
+  }
+
   private static transformToAutomation(dbAutomation: any): Automation {
     return {
       id: dbAutomation.id,

@@ -55,8 +55,8 @@ app.use((req, _res, next) => {
 import authRouter from "./crystal/auth/authRouter";
 import instagramRouter from "./crystal/instagram/instagramRouter";
 import conversationRouter from "./crystal/conversations/conversationRouter";
+import automationRouter from "./crystal/automations/automationRouter";
 // import dashboardRouter from "./crystal/dashboard/dashboardRouter";
-// import automationRouter from "./crystal/automations/automationRouter";
 
 // ========================================
 // BASIC ROUTES
@@ -106,8 +106,8 @@ app.get("/", (_req, res) => {
 app.use("/crystal/auth", authRouter);
 app.use("/crystal/instagram", instagramRouter);
 app.use("/crystal/conversations", conversationRouter);
+app.use("/crystal/automations", automationRouter);
 // app.use("/crystal/dashboard", dashboardRouter);
-// app.use("/crystal/automations", automationRouter);
 
 // ========================================
 // ERROR HANDLING

@@ -28,6 +28,7 @@ model User {
   teams     TeamMember[]
   automations Automation[]
   conversations Conversation[]
+  jobLogs   JobLog[]     // All job executions for this user
 
   @@map("users")
 }
@@ -101,6 +102,7 @@ model Automation {
   // Relations
   user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
   conversations Conversation[]
+  jobLogs     JobLog[]     // All job executions for this automation
 
   @@map("automations")
 }
@@ -157,13 +159,21 @@ model Message {
 }
 
 model JobLog {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  jobType   JobType
-  payload   Json
-  status    JobStatus @default(PENDING)
-  error     String?
-  runAt     DateTime @default(now())
-  completedAt DateTime?
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  jobType      JobType
+  payload      Json
+  status       JobStatus @default(PENDING)
+  error        String?
+  runAt        DateTime @default(now())
+  completedAt  DateTime?
+  
+  // Link to automation and user
+  automationId String?  @db.ObjectId
+  userId       String?  @db.ObjectId
+
+  // Relations
+  automation   Automation? @relation(fields: [automationId], references: [id], onDelete: SetNull)
+  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@map("job_logs")
 }
