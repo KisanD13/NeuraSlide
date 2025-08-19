@@ -28,6 +28,7 @@ model User {
   teams     TeamMember[]
   createdAtAutomations Automation[] @relation("CreatedBy")
   updatedAtAutomations Automation[] @relation("UpdatedBy")
+  conversations Conversation[]
 
   @@map("users")
 }
@@ -106,40 +107,55 @@ model Automation {
   instagramAccount InstagramAccount? @relation(fields: [instagramAccountId], references: [id], onDelete: SetNull)
   creator     User @relation("CreatedBy", fields: [createdBy], references: [id])
   updater     User @relation("UpdatedBy", fields: [updatedBy], references: [id])
+  conversations Conversation[]
 
   @@map("automations")
 }
 
 model Conversation {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
   instagramAccountId String @db.ObjectId
-  externalId    String   // Instagram conversation/message ID
-  externalUserId String  // Instagram user ID
-  externalUsername String? // Instagram username
+  externalConversationId String // Instagram conversation ID
+  participantId String   // Instagram user ID
+  participantUsername String
+  participantFullName String?
+  participantProfilePic String?
   status        ConversationStatus @default(ACTIVE)
   lastMessageAt DateTime @default(now())
+  lastMessageText String?
+  messageCount  Int      @default(0)
+  isAutomated   Boolean  @default(false)
+  automationId  String?  @db.ObjectId
+  tags          String[] @default([])
+  priority      ConversationPriority @default(MEDIUM)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   // Relations
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
   instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
-  messages     Message[]
+  messages      Message[]
+  automation    Automation? @relation(fields: [automationId], references: [id], onDelete: SetNull)
 
-  @@unique([instagramAccountId, externalId])
+  @@unique([instagramAccountId, externalConversationId])
   @@map("conversations")
 }
 
 model Message {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
   conversationId String   @db.ObjectId
-  externalId     String?  // Instagram message ID
-  sender         MessageSender
+  externalMessageId String // Instagram message ID
+  senderType     MessageSenderType
+  senderId       String
+  senderName     String
   text           String
+  mediaUrls      String[] @default([])
+  messageType    MessageType @default(TEXT)
+  status         MessageStatus @default(PENDING)
   metadata       Json?    // Store message metadata (attachments, etc.)
-  isDelivered    Boolean  @default(false)
-  deliveredAt    DateTime?
-  errorMessage   String?
   createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -184,12 +200,39 @@ enum ConversationStatus {
   ACTIVE
   ARCHIVED
   BLOCKED
+  PENDING
+  RESOLVED
 }
 
-enum MessageSender {
+enum ConversationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MessageSenderType {
   USER
   BOT
   EXTERNAL
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+  STICKER
+  LOCATION
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  PENDING
 }
 
 enum JobType {
