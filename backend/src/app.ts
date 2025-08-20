@@ -63,6 +63,10 @@ import dashboardRouter from "./crystal/dashboard/dashboardRouter";
 import billingRouter from "./crystal/billing/billingRouter";
 import accountRouter from "./crystal/account/accountRouter";
 
+// Webhook routes (external integrations)
+import instagramWebhookRouter from "./webhooks/instagram/instagramWebhookRouter";
+import stripeWebhookRouter from "./webhooks/stripe/stripeWebhookRouter";
+
 // ========================================
 // BASIC ROUTES
 // ========================================
@@ -103,6 +107,10 @@ app.get("/", (_req, res) => {
           billing: "/crystal/billing",
           account: "/crystal/account",
         },
+        webhooks: {
+          instagram: "/webhooks/instagram",
+          stripe: "/webhooks/stripe",
+        },
       },
     },
   });
@@ -123,6 +131,10 @@ app.use("/crystal/campaigns", campaignRouter);
 app.use("/crystal/dashboard", dashboardRouter);
 app.use("/crystal/billing", billingRouter);
 app.use("/crystal/account", accountRouter);
+
+// Webhook routes (external integrations)
+app.use("/webhooks/instagram", instagramWebhookRouter);
+app.use("/webhooks/stripe", stripeWebhookRouter);
 
 // ========================================
 // ERROR HANDLING
