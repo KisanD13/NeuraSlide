@@ -59,7 +59,7 @@ import automationRouter from "./crystal/automations/automationRouter";
 import productRouter from "./crystal/products/productRouter";
 import aiRouter from "./crystal/ai/aiRouter";
 import campaignRouter from "./crystal/campaigns/campaignRouter";
-// import dashboardRouter from "./crystal/dashboard/dashboardRouter";
+import dashboardRouter from "./crystal/dashboard/dashboardRouter";
 
 // ========================================
 // BASIC ROUTES
@@ -116,7 +116,7 @@ app.use("/crystal/automations", automationRouter);
 app.use("/crystal/products", productRouter);
 app.use("/crystal/ai", aiRouter);
 app.use("/crystal/campaigns", campaignRouter);
-// app.use("/crystal/dashboard", dashboardRouter);
+app.use("/crystal/dashboard", dashboardRouter);
 
 // ========================================
 // ERROR HANDLING
