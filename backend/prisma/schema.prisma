@@ -34,6 +34,10 @@ model User {
   aiConversations AIConversation[]     // All AI conversations for this user
   aiTrainingData AITrainingData[]     // All AI training data for this user
   campaigns Campaign[]     // All campaigns for this user
+  subscriptions Subscription[]     // All subscriptions for this user
+  invoices  Invoice[]     // All invoices for this user
+  paymentMethods PaymentMethod[]     // All payment methods for this user
+  usageRecords UsageRecord[]     // All usage records for this user
 
   @@map("users")
 }
@@ -432,4 +436,144 @@ model CampaignResponse {
   faq            FAQ? @relation(fields: [faqId], references: [id], onDelete: SetNull)
 
   @@map("campaign_responses")
+}
+
+// Billing Models
+model Subscription {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId                String   @db.ObjectId
+  planId                String   @db.ObjectId
+  status                SubscriptionStatus @default(TRIALING)
+  currentPeriodStart    DateTime
+  currentPeriodEnd      DateTime
+  cancelAtPeriodEnd     Boolean  @default(false)
+  trialStart            DateTime?
+  trialEnd              DateTime?
+  stripeSubscriptionId  String?  @unique
+  stripeCustomerId      String?
+  metadata              Json?    // Store additional subscription metadata
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  user                  User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                  SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
+  invoices              Invoice[]
+  usageRecords          UsageRecord[]
+
+  @@map("subscriptions")
+}
+
+model SubscriptionPlan {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  description   String
+  price         Float
+  currency      String   @default("USD")
+  interval      BillingInterval
+  intervalCount Int      @default(1)
+  features      Json     // Store plan features as JSON
+  isActive      Boolean  @default(true)
+  stripePriceId String?  @unique
+  metadata      Json?    // Store additional plan metadata
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Invoice {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String   @db.ObjectId
+  subscriptionId   String   @db.ObjectId
+  amount           Float
+  currency         String   @default("USD")
+  status           InvoiceStatus @default(DRAFT)
+  description      String
+  invoiceUrl       String?
+  paidAt           DateTime?
+  dueDate          DateTime
+  stripeInvoiceId  String?  @unique
+  metadata         Json?    // Store additional invoice metadata
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  user             User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription     Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+model PaymentMethod {
+  id                     String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId                 String   @db.ObjectId
+  type                   PaymentMethodType
+  last4                  String?
+  brand                  String?
+  expiryMonth            Int?
+  expiryYear             Int?
+  isDefault              Boolean  @default(false)
+  stripePaymentMethodId  String?  @unique
+  metadata               Json?    // Store additional payment method metadata
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  // Relations
+  user                   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payment_methods")
+}
+
+model UsageRecord {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  subscriptionId String   @db.ObjectId
+  feature        String
+  usage          Int      @default(0)
+  limit          Int
+  period         String   // YYYY-MM format
+  metadata       Json?    // Store additional usage metadata
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, feature, period])
+  @@map("usage_records")
+}
+
+// Billing Enums
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  PAST_DUE
+  TRIALING
+  UNPAID
+}
+
+enum BillingInterval {
+  MONTH
+  YEAR
+}
+
+enum InvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+  UNCOLLECTIBLE
+}
+
+enum PaymentMethodType {
+  CARD
+  BANK_ACCOUNT
+  PAYPAL
 }
