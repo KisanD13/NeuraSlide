@@ -61,6 +61,7 @@ import aiRouter from "./crystal/ai/aiRouter";
 import campaignRouter from "./crystal/campaigns/campaignRouter";
 import dashboardRouter from "./crystal/dashboard/dashboardRouter";
 import billingRouter from "./crystal/billing/billingRouter";
+import accountRouter from "./crystal/account/accountRouter";
 
 // ========================================
 // BASIC ROUTES
@@ -100,6 +101,7 @@ app.get("/", (_req, res) => {
           campaigns: "/crystal/campaigns",
           dashboard: "/crystal/dashboard",
           billing: "/crystal/billing",
+          account: "/crystal/account",
         },
       },
     },
@@ -120,6 +122,7 @@ app.use("/crystal/ai", aiRouter);
 app.use("/crystal/campaigns", campaignRouter);
 app.use("/crystal/dashboard", dashboardRouter);
 app.use("/crystal/billing", billingRouter);
+app.use("/crystal/account", accountRouter);
 
 // ========================================
 // ERROR HANDLING

@@ -38,6 +38,9 @@ model User {
   invoices  Invoice[]     // All invoices for this user
   paymentMethods PaymentMethod[]     // All payment methods for this user
   usageRecords UsageRecord[]     // All usage records for this user
+  accountSettings AccountSettings?     // User account settings
+  accountActivities AccountActivity[]     // User activity log
+  dataExports DataExport[]     // User data exports
 
   @@map("users")
 }
@@ -576,4 +579,87 @@ enum PaymentMethodType {
   CARD
   BANK_ACCOUNT
   PAYPAL
+}
+
+// Account Management Models
+model AccountSettings {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId              String   @db.ObjectId @unique
+  emailNotifications  Json     // Store email notification settings as JSON
+  pushNotifications   Json     // Store push notification settings as JSON
+  privacySettings     Json     // Store privacy settings as JSON
+  automationSettings  Json     // Store automation settings as JSON
+  aiSettings          Json     // Store AI settings as JSON
+  metadata            Json?    // Store additional settings metadata
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  user                User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account_settings")
+}
+
+model AccountActivity {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  type        ActivityType
+  description String
+  metadata    Json?    // Store activity metadata as JSON
+  ipAddress   String?
+  userAgent   String?
+  location    String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account_activities")
+}
+
+model DataExport {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  status       ExportStatus @default(PENDING)
+  dataTypes    String[] // Array of data types to export
+  format       String   // 'json' or 'csv'
+  fileUrl      String?
+  expiresAt    DateTime
+  metadata     Json?    // Store export metadata as JSON
+  createdAt    DateTime @default(now())
+  completedAt  DateTime?
+
+  // Relations
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("data_exports")
+}
+
+// Account Management Enums
+enum ActivityType {
+  LOGIN
+  LOGOUT
+  PASSWORD_CHANGE
+  PROFILE_UPDATE
+  SETTINGS_UPDATE
+  SUBSCRIPTION_CHANGE
+  PAYMENT_METHOD_ADDED
+  PAYMENT_METHOD_REMOVED
+  INSTAGRAM_CONNECTED
+  INSTAGRAM_DISCONNECTED
+  AUTOMATION_CREATED
+  AUTOMATION_UPDATED
+  AUTOMATION_DELETED
+  PRODUCT_ADDED
+  PRODUCT_UPDATED
+  AI_CONVERSATION_STARTED
+  CAMPAIGN_CREATED
+  CAMPAIGN_UPDATED
+}
+
+enum ExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
