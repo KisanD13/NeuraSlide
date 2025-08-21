@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 import createHttpError from "http-errors";
 import { config } from "../../config/config";
 import { logger } from "../../utils/logger";
+import { prisma } from "../../config/db";
+import { MongoClient } from "mongodb";
 import {
   User,
   Team,
@@ -285,32 +287,82 @@ export class AuthService {
     try {
       const hashedPassword = await this.hashPassword(signupData.password);
 
-      // TODO: Replace with actual database operations
-      const newUser: User = {
-        id: "generated-user-id",
+      // Use native MongoDB driver to avoid Prisma transaction issues
+      const client = new MongoClient(process.env["DATABASE_URL"]!);
+      await client.connect();
+
+      const db = client.db();
+      const usersCollection = db.collection("users");
+      const teamsCollection = db.collection("teams");
+      const teamMembersCollection = db.collection("team_members");
+
+      // Create user
+      const userData = {
         email: signupData.email,
         password: hashedPassword,
-        name: signupData.name,
-        role: "owner" as UserRole,
+        name: signupData.name, // Store as single full name
+        role: "USER",
+        isActive: true,
         isEmailVerified: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
+      const userResult = await usersCollection.insertOne(userData);
+      const createdUser = {
+        id: userResult.insertedId.toString(),
+        ...userData,
+      };
+
       let newTeam: Team | undefined = undefined;
 
+      // Create team and team member relationship if teamName is provided
       if (signupData.teamName) {
-        newTeam = {
-          id: "generated-team-id",
+        const teamData = {
           name: signupData.teamName,
-          ownerId: newUser.id,
-          plan: "free",
+          description: `Team for ${signupData.name}`,
+          isActive: true,
           createdAt: new Date(),
           updatedAt: new Date(),
         };
 
-        newUser.teamId = newTeam.id;
+        const teamResult = await teamsCollection.insertOne(teamData);
+        const createdTeam = {
+          id: teamResult.insertedId.toString(),
+          ...teamData,
+        };
+
+        // Create team member relationship
+        await teamMembersCollection.insertOne({
+          userId: createdUser.id,
+          teamId: createdTeam.id,
+          role: "OWNER",
+          joinedAt: new Date(),
+        });
+
+        newTeam = {
+          id: createdTeam.id,
+          name: createdTeam.name,
+          ownerId: createdUser.id,
+          plan: "free", // Default plan
+          createdAt: createdTeam.createdAt,
+          updatedAt: createdTeam.updatedAt,
+        };
       }
+
+      await client.close();
+
+      const newUser: User = {
+        id: createdUser.id,
+        email: createdUser.email,
+        password: createdUser.password,
+        name: signupData.name, // Keep the original name for compatibility
+        role: "owner" as UserRole, // Map to our expected type
+        isEmailVerified: createdUser.isEmailVerified, // Use value from database
+        createdAt: createdUser.createdAt,
+        updatedAt: createdUser.updatedAt,
+        ...(newTeam && { teamId: newTeam.id }),
+      };
 
       logger.info(`User created successfully: ${newUser.email}`);
 
@@ -322,6 +374,12 @@ export class AuthService {
       return result;
     } catch (error: any) {
       logger.error("Error creating user and team:", error);
+      logger.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        meta: error.meta,
+        stack: error.stack,
+      });
 
       if (error.status) {
         throw error; // Re-throw createHttpError
@@ -331,12 +389,36 @@ export class AuthService {
     }
   }
 
-  // Find user by email (placeholder)
+  // Find user by email
   static async findUserByEmail(email: string): Promise<User | null> {
     try {
-      // TODO: Replace with actual Prisma database query
       logger.info(`Looking up user by email: ${email}`);
-      return null;
+
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        return null;
+      }
+
+      // Get user's team membership
+      const teamMember = await prisma.teamMember.findFirst({
+        where: { userId: user.id },
+        include: { team: true },
+      });
+
+      return {
+        id: user.id,
+        email: user.email,
+        password: user.password,
+        name: user.name,
+        role: (user.role === "ADMIN" ? "admin" : "owner") as UserRole, // Map to our expected type
+        isEmailVerified: user.isEmailVerified || false, // Get from database
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        ...(teamMember?.teamId && { teamId: teamMember.teamId }),
+      };
     } catch (error: any) {
       logger.error("Error finding user by email:", error);
 
@@ -371,12 +453,35 @@ export class AuthService {
     }
   }
 
-  // Find team by ID (placeholder)
+  // Find team by ID
   static async findTeamById(teamId: string): Promise<Team | null> {
     try {
-      // TODO: Replace with actual Prisma database query
       logger.info(`Looking up team by ID: ${teamId}`);
-      return null;
+
+      const team = await prisma.team.findUnique({
+        where: { id: teamId },
+      });
+
+      if (!team) {
+        return null;
+      }
+
+      // Get team owner
+      const ownerMember = await prisma.teamMember.findFirst({
+        where: {
+          teamId: team.id,
+          role: "OWNER",
+        },
+      });
+
+      return {
+        id: team.id,
+        name: team.name,
+        ownerId: ownerMember?.userId || "",
+        plan: "free", // Default plan as per authTypes
+        createdAt: team.createdAt,
+        updatedAt: team.updatedAt,
+      };
     } catch (error: any) {
       logger.error("Error finding team by ID:", error);
 

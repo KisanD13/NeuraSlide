@@ -48,8 +48,7 @@ export class AdminService {
       if (search) {
         where.OR = [
           { email: { contains: search, mode: "insensitive" } },
-          { firstName: { contains: search, mode: "insensitive" } },
-          { lastName: { contains: search, mode: "insensitive" } },
+          { name: { contains: search, mode: "insensitive" } },
         ];
       }
 
@@ -71,8 +70,7 @@ export class AdminService {
           select: {
             id: true,
             email: true,
-            firstName: true,
-            lastName: true,
+            name: true,
             role: true,
             isActive: true,
             createdAt: true,
@@ -102,8 +100,7 @@ export class AdminService {
       const adminUsers: AdminUser[] = users.map((user) => ({
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        name: user.name,
         role: user.role as any,
         status: user.isActive ? "ACTIVE" : "SUSPENDED",
         subscription: user.subscriptions[0]
@@ -143,8 +140,7 @@ export class AdminService {
         select: {
           id: true,
           email: true,
-          firstName: true,
-          lastName: true,
+          name: true,
           role: true,
           isActive: true,
           createdAt: true,
@@ -175,8 +171,8 @@ export class AdminService {
       return {
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        name: user.name,
+
         role: user.role as any,
         status: user.isActive ? "ACTIVE" : "SUSPENDED",
         subscription: user.subscriptions[0]
@@ -209,8 +205,8 @@ export class AdminService {
     try {
       const updateData: any = {};
 
-      if (data.firstName !== undefined) updateData.firstName = data.firstName;
-      if (data.lastName !== undefined) updateData.lastName = data.lastName;
+      if (data.name !== undefined) updateData.name = data.name;
+
       if (data.role !== undefined) updateData.role = data.role;
       if (data.status !== undefined) {
         updateData.isActive = data.status === "ACTIVE";
@@ -222,8 +218,8 @@ export class AdminService {
         select: {
           id: true,
           email: true,
-          firstName: true,
-          lastName: true,
+          name: true,
+
           role: true,
           isActive: true,
           createdAt: true,
@@ -250,8 +246,8 @@ export class AdminService {
       return {
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        name: user.name,
+
         role: user.role as any,
         status: user.isActive ? "ACTIVE" : "SUSPENDED",
         subscription: user.subscriptions[0]

@@ -7,8 +7,7 @@
 export interface AdminUser {
   id: string;
   email: string;
-  firstName: string | null;
-  lastName: string | null;
+  name: string;
   role: UserRole;
   status: UserStatus;
   subscription: AdminSubscription | null;
@@ -48,8 +47,7 @@ export interface AdminUserListResponse {
 }
 
 export interface AdminUserUpdateRequest {
-  firstName?: string;
-  lastName?: string;
+  name?: string;
   role?: UserRole;
   status?: UserStatus;
 }
@@ -152,7 +150,11 @@ export interface AdminActionListResponse {
 // ========================================
 
 export interface BulkOperationRequest {
-  operation: "suspend_users" | "activate_users" | "delete_users" | "disable_automations";
+  operation:
+    | "suspend_users"
+    | "activate_users"
+    | "delete_users"
+    | "disable_automations";
   targetIds: string[];
   reason?: string;
 }

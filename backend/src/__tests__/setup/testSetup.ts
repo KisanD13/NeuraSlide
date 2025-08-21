@@ -77,16 +77,14 @@ export const teardownTestDatabase = async () => {
 export const createTestUser = async (userData: {
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   role?: string;
 }) => {
   return await prisma.user.create({
     data: {
       email: userData.email,
       password: userData.password, // In real app, this would be hashed
-      firstName: userData.firstName,
-      lastName: userData.lastName,
+      name: userData.name,
       role: (userData.role as any) || "USER",
     },
   });
