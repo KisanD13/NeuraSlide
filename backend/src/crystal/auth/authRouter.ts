@@ -1,5 +1,6 @@
 import express from "express";
 import { AuthController } from "./authController";
+import { authenticate } from "../../middlewares/authenticate";
 
 const authRouter = express.Router();
 
@@ -7,7 +8,7 @@ const authRouter = express.Router();
 authRouter.post("/signup", AuthController.signup);
 authRouter.post("/login", AuthController.login);
 authRouter.post("/logout", AuthController.logout);
-authRouter.get("/me", AuthController.getCurrentUser);
+authRouter.get("/me", authenticate, AuthController.getCurrentUser);
 
 // Password management routes
 authRouter.post("/forgot-password", AuthController.forgotPassword);

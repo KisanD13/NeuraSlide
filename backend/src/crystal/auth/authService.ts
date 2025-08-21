@@ -433,12 +433,36 @@ export class AuthService {
     }
   }
 
-  // Find user by ID (placeholder)
+  // Find user by ID
   static async findUserById(id: string): Promise<User | null> {
     try {
-      // TODO: Replace with actual Prisma database query
       logger.info(`Looking up user by ID: ${id}`);
-      return null;
+
+      const user = await prisma.user.findUnique({
+        where: { id },
+      });
+
+      if (!user) {
+        return null;
+      }
+
+      // Get user's team membership
+      const teamMember = await prisma.teamMember.findFirst({
+        where: { userId: user.id },
+        include: { team: true },
+      });
+
+      return {
+        id: user.id,
+        email: user.email,
+        password: user.password,
+        name: user.name,
+        role: (user.role === "ADMIN" ? "admin" : "owner") as UserRole, // Map to our expected type
+        isEmailVerified: user.isEmailVerified, // Use from database
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        ...(teamMember?.teamId && { teamId: teamMember.teamId }),
+      };
     } catch (error: any) {
       logger.error("Error finding user by ID:", error);
 
