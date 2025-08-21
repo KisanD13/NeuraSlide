@@ -408,12 +408,26 @@ export class AuthService {
         include: { team: true },
       });
 
+      // Map Prisma UserRole to our UserRole type
+      let mappedRole: UserRole;
+      if (user.role === "ADMIN") {
+        mappedRole = "admin";
+      } else if (teamMember?.role === "OWNER") {
+        mappedRole = "owner";
+      } else if (teamMember?.role === "MEMBER") {
+        mappedRole = "member";
+      } else if (teamMember?.role === "VIEWER") {
+        mappedRole = "viewer";
+      } else {
+        mappedRole = "owner"; // Default for users without team membership
+      }
+
       return {
         id: user.id,
         email: user.email,
         password: user.password,
         name: user.name,
-        role: (user.role === "ADMIN" ? "admin" : "owner") as UserRole, // Map to our expected type
+        role: mappedRole,
         isEmailVerified: user.isEmailVerified || false, // Get from database
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
@@ -452,12 +466,26 @@ export class AuthService {
         include: { team: true },
       });
 
+      // Map Prisma UserRole to our UserRole type
+      let mappedRole: UserRole;
+      if (user.role === "ADMIN") {
+        mappedRole = "admin";
+      } else if (teamMember?.role === "OWNER") {
+        mappedRole = "owner";
+      } else if (teamMember?.role === "MEMBER") {
+        mappedRole = "member";
+      } else if (teamMember?.role === "VIEWER") {
+        mappedRole = "viewer";
+      } else {
+        mappedRole = "owner"; // Default for users without team membership
+      }
+
       return {
         id: user.id,
         email: user.email,
         password: user.password,
         name: user.name,
-        role: (user.role === "ADMIN" ? "admin" : "owner") as UserRole, // Map to our expected type
+        role: mappedRole,
         isEmailVerified: user.isEmailVerified, // Use from database
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
@@ -526,9 +554,17 @@ export class AuthService {
     newPassword: string
   ): Promise<void> {
     try {
-      await this.hashPassword(newPassword);
+      const hashedPassword = await this.hashPassword(newPassword);
 
-      // TODO: Replace with actual Prisma database update
+      // Update password in database
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          password: hashedPassword,
+          updatedAt: new Date(),
+        },
+      });
+
       logger.info(`Password updated for user: ${userId}`);
     } catch (error: any) {
       logger.error("Error updating user password:", error);
@@ -547,7 +583,15 @@ export class AuthService {
   // Mark email as verified
   static async markEmailAsVerified(email: string): Promise<void> {
     try {
-      // TODO: Replace with actual Prisma database update
+      // Update email verification status in database
+      await prisma.user.update({
+        where: { email },
+        data: {
+          isEmailVerified: true,
+          updatedAt: new Date(),
+        },
+      });
+
       logger.info(`Email verified for user: ${email}`);
     } catch (error: any) {
       logger.error("Error marking email as verified:", error);

@@ -2,8 +2,12 @@
 
 import express from "express";
 import { InstagramController } from "./instagramController";
+import { authenticate } from "../../middlewares/authenticate";
 
 const instagramRouter = express.Router();
+
+// Apply authentication middleware to all Instagram routes
+instagramRouter.use(authenticate);
 
 // Instagram OAuth routes
 instagramRouter.get("/oauth-url", InstagramController.getOAuthUrl);
