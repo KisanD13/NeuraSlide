@@ -1,2 +1,40 @@
 @import "tailwindcss";
-@plugin "daisyui";
+@plugin "daisyui" {
+  themes: light --default;
+}
+
+@plugin "daisyui/theme" {
+  default: true;
+  /* NeuraSlide Custom DaisyUI Theme */
+  --color-primary: #06b6d4;
+  --color-primary-content: #ffffff;
+  --color-primary-focus: #0891b2;
+
+  --color-secondary: #3b82f6;
+  --color-secondary-content: #ffffff;
+  --color-secondary-focus: #2563eb;
+
+  --color-accent: #22d3ee;
+  --color-accent-content: #ffffff;
+
+  --color-neutral: #64748b;
+  --color-neutral-content: #ffffff;
+  --color-neutral-focus: #475569;
+
+  --color-base-100: #ffffff;
+  --color-base-200: #f8fafc;
+  --color-base-300: #f1f5f9;
+  --color-base-content: #0f172a;
+
+  --color-info: #06b6d4;
+  --color-info-content: #ffffff;
+
+  --color-success: #10b981;
+  --color-success-content: #ffffff;
+
+  --color-warning: #f59e0b;
+  --color-warning-content: #ffffff;
+
+  --color-error: #ef4444;
+  --color-error-content: #ffffff;
+}

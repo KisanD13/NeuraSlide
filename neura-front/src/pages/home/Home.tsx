@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import Navbar from "../../components/layout/Navbar";
+import { theme } from "../../config/theme";
 import {
   features,
   steps,
@@ -11,36 +13,10 @@ import {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            {/* Logo */}
-            <div className="flex items-center">
-              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">
-                ✦ NeuraSlide
-              </div>
-            </div>
-
-            {/* Navigation Buttons */}
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/auth/login"
-                className="btn bg-gray-300 text-gray-600 hover:bg-gray-400 border-none hover:shadow-neutral"
-              >
-                Log In
-              </Link>
-              <Link
-                to="/auth/signup"
-                className="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white border-none"
-              >
-                Sign Up
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div
+      className={`min-h-screen bg-gradient-to-br ${theme.gradients.background}`}
+    >
+      <Navbar showAuthButtons={true} />
 
       {/* Hero Section */}
       <section className="py-20 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
@@ -48,7 +24,7 @@ export default function Home() {
         {/* <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/5 via-blue-500/10 to-purple-600/5"></div>
         <div className="absolute top-20 left-20 w-64 h-64 bg-cyan-400/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 right-20 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl"></div> */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className={`${theme.spacing.container} relative z-10`}>
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             {/* Left Content */}
             <motion.div
@@ -63,7 +39,9 @@ export default function Home() {
                   Outreach with AI Autopilot, AutoDM, AutoComment.
                 </span>
               </h1>
-              <p className="text-lg sm:text-xl text-gray-300 mb-8 leading-relaxed">
+              <p
+                className={`text-lg sm:text-xl ${theme.typography.body} mb-8 leading-relaxed`}
+              >
                 NeuraSlide empowers businesses to automate direct messages and
                 comments, engage followers in real-time, and drive conversions
                 effortlessly.
@@ -71,7 +49,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
                   to="/auth/signup"
-                  className="btn bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white border-none px-6 sm:px-8 py-3 text-base sm:text-lg shadow-lg shadow-cyan-500/25 w-full sm:w-auto"
+                  className={`btn ${theme.components.button.primary} px-6 sm:px-8 py-3 text-base sm:text-lg w-full sm:w-auto border-none`}
                 >
                   Get Started Free
                 </Link>
@@ -101,8 +79,8 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className={`${theme.spacing.section} bg-slate-50`}>
+        <div className={theme.spacing.container}>
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -143,8 +121,10 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section
+        className={`${theme.spacing.section} bg-gradient-to-br from-blue-50 to-indigo-100`}
+      >
+        <div className={theme.spacing.container}>
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -193,8 +173,8 @@ export default function Home() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className={`${theme.spacing.section} bg-white`}>
+        <div className={theme.spacing.container}>
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
