@@ -40,7 +40,11 @@ export class AdminService {
         sortBy = "createdAt",
         sortOrder = "desc",
       } = filters;
-      const skip = (page - 1) * limit;
+
+      // Convert string parameters to numbers
+      const pageNum = typeof page === "string" ? parseInt(page) : page;
+      const limitNum = typeof limit === "string" ? parseInt(limit) : limit;
+      const skip = (pageNum - 1) * limitNum;
 
       // Build where clause
       const where: any = {};
@@ -65,7 +69,7 @@ export class AdminService {
         prisma.user.findMany({
           where,
           skip,
-          take: limit,
+          take: limitNum,
           orderBy: { [sortBy]: sortOrder },
           select: {
             id: true,
