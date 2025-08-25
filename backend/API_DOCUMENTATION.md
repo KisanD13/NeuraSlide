@@ -92,7 +92,7 @@ http://localhost:5513
 
 ## 🔐 Authentication
 
-### POST `/crystal/auth/signup`
+### POST `/crystal/auth/signup`, done
 
 **Purpose**: Register a new user account
 **Why Required**: Core functionality for user onboarding
@@ -143,7 +143,7 @@ http://localhost:5513
 }
 ```
 
-### POST `/crystal/auth/login`
+### POST `/crystal/auth/login` done
 
 **Purpose**: Authenticate user and get access token
 **Why Required**: Secure access to protected resources
@@ -184,7 +184,7 @@ http://localhost:5513
 }
 ```
 
-### GET `/crystal/auth/me`
+### GET `/crystal/auth/me` done
 
 **Purpose**: Get current user profile
 **Why Required**: Display user information in dashboard

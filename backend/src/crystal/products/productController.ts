@@ -14,7 +14,7 @@ export class ProductController {
   // Create new product
   static async createProduct(req: Request, res: Response, _next: NextFunction) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -45,7 +45,7 @@ export class ProductController {
   // Get all products for user
   static async getProducts(req: Request, res: Response, _next: NextFunction) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -90,7 +90,7 @@ export class ProductController {
   // Get single product by ID
   static async getProduct(req: Request, res: Response, _next: NextFunction) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -127,7 +127,7 @@ export class ProductController {
   // Update product
   static async updateProduct(req: Request, res: Response, _next: NextFunction) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -167,7 +167,7 @@ export class ProductController {
   // Delete product
   static async deleteProduct(req: Request, res: Response, _next: NextFunction) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -208,7 +208,7 @@ export class ProductController {
     _next: NextFunction
   ) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -248,7 +248,7 @@ export class ProductController {
     _next: NextFunction
   ) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -290,7 +290,7 @@ export class ProductController {
     _next: NextFunction
   ) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -325,7 +325,7 @@ export class ProductController {
     _next: NextFunction
   ) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }

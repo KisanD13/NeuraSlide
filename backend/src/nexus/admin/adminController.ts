@@ -18,7 +18,7 @@ import {
 
 interface AuthenticatedRequest extends Request {
   user?: {
-    id: string;
+    sub: string;
     email: string;
     role: string;
   };
@@ -218,7 +218,7 @@ export class AdminController {
     _next: NextFunction
   ) {
     try {
-      const adminId = req.user?.id;
+      const adminId = req.user?.sub;
       if (!adminId) {
         return res.status(401).json({
           success: false,
@@ -398,7 +398,7 @@ export class AdminController {
     _next: NextFunction
   ) {
     try {
-      const adminId = req.user?.id;
+      const adminId = req.user?.sub;
       if (!adminId) {
         return res.status(401).json({
           success: false,

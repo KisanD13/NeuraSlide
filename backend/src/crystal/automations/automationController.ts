@@ -14,7 +14,7 @@ export class AutomationController {
     _next: NextFunction
   ) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -55,7 +55,7 @@ export class AutomationController {
     _next: NextFunction
   ) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -92,7 +92,7 @@ export class AutomationController {
   // Get single automation by ID
   static async getAutomation(req: Request, res: Response, _next: NextFunction) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -134,7 +134,7 @@ export class AutomationController {
     _next: NextFunction
   ) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -184,7 +184,7 @@ export class AutomationController {
     _next: NextFunction
   ) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -219,7 +219,7 @@ export class AutomationController {
     _next: NextFunction
   ) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -260,7 +260,7 @@ export class AutomationController {
     _next: NextFunction
   ) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -306,7 +306,7 @@ export class AutomationController {
     _next: NextFunction
   ) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }
@@ -350,7 +350,7 @@ export class AutomationController {
     _next: NextFunction
   ) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.sub;
       if (!userId) {
         throw createHttpError(401, "User not authenticated");
       }

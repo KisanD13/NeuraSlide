@@ -15,7 +15,7 @@ export class AIController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const validation = AIValidation.validateGenerateResponse(req.body);
 
       if (!validation.isValid) {
@@ -60,7 +60,7 @@ export class AIController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const validation = AIValidation.validateCreateConversation(req.body);
 
       if (!validation.isValid) {
@@ -105,7 +105,7 @@ export class AIController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const conversationId = req.params["id"];
 
       if (!conversationId) {
@@ -162,7 +162,7 @@ export class AIController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const conversationId = req.params["id"];
 
       if (!conversationId) {
@@ -232,7 +232,7 @@ export class AIController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const validation = AIValidation.validateAddMessage(req.body);
 
       if (!validation.isValid) {
@@ -277,7 +277,7 @@ export class AIController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const query = req.query["query"] as string;
       const tags = req.query["tags"] as string;
       const isActive = req.query["isActive"] as string;
@@ -325,7 +325,7 @@ export class AIController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const validation = AIValidation.validateAddTrainingData(req.body);
 
       if (!validation.isValid) {
@@ -370,7 +370,7 @@ export class AIController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const performance = await AIService.getPerformance(userId);
 
       res.status(200).json({

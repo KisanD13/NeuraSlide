@@ -15,7 +15,7 @@ export class CampaignController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const validation = CampaignValidation.validateCreateCampaign(req.body);
 
       if (!validation.isValid) {
@@ -60,7 +60,7 @@ export class CampaignController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const campaignId = req.params["id"];
 
       if (!campaignId) {
@@ -114,7 +114,7 @@ export class CampaignController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const campaignId = req.params["id"];
 
       if (!campaignId) {
@@ -184,7 +184,7 @@ export class CampaignController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const status = req.query["status"] as string;
       const type = req.query["type"] as string;
       const isActive = req.query["isActive"] as string;
@@ -232,7 +232,7 @@ export class CampaignController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const campaignId = req.params["campaignId"];
 
       if (!campaignId) {
@@ -286,7 +286,7 @@ export class CampaignController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const campaignId = req.params["campaignId"];
       const faqId = req.params["faqId"];
 
@@ -346,7 +346,7 @@ export class CampaignController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const campaignId = req.params["campaignId"];
 
       if (!campaignId) {
@@ -412,7 +412,7 @@ export class CampaignController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const campaignId = req.params["campaignId"];
 
       if (!campaignId) {
@@ -470,7 +470,7 @@ export class CampaignController {
     _next: NextFunction
   ): Promise<void> {
     try {
-      const userId = (req as any).user.id;
+      const userId = (req as any).user.sub;
       const campaignId = req.params["id"];
 
       if (!campaignId) {
