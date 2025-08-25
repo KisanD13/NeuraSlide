@@ -31,19 +31,26 @@ export default function Logo({
   return (
     <Link to="/" className={`inline-flex items-center space-x-3 ${className}`}>
       {/* Logo Icon */}
-      <div
-        className={`${currentSize.icon} bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center`}
-      >
-        <span className="text-white font-bold text-lg">N</span>
+      <div className={`${currentSize.icon} flex items-center justify-center`}>
+        <img
+          src="/images/neuraslide-logo.svg"
+          alt="NeuraSlide Logo"
+          className="w-full h-full"
+        />
       </div>
 
       {/* Logo Text */}
       {showText && (
-        <span
-          className={`${currentSize.text} font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary`}
-        >
-          NeuraSlide
-        </span>
+        <div className="flex flex-col">
+          <span className="text-xs font-medium text-cyan-400 tracking-wide">
+            Neura
+          </span>
+          <span
+            className={`${currentSize.text} font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600`}
+          >
+            Slide
+          </span>
+        </div>
       )}
     </Link>
   );
