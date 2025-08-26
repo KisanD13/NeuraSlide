@@ -4,9 +4,9 @@
   "description": "NeuraSlide - Instagram automation platform backend",
   "main": "server.ts",
   "scripts": {
-    "dev": "nodemon server.ts",
+    "dev": "nodemon src/server.ts",
     "build": "tsc",
-    "start": "node server.ts",
+    "start": "ts-node src/server.ts",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:studio": "prisma studio",
