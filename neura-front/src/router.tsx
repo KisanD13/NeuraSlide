@@ -7,6 +7,7 @@ import {
 // Pages
 import Home from "./pages/home/Home";
 import Signup from "./pages/auth/Signup";
+import Login from "./pages/auth/Login";
 
 const Router = () => {
   const router = createBrowserRouter([
@@ -19,7 +20,7 @@ const Router = () => {
       children: [
         {
           path: "login",
-          element: <div>Login Page - Coming Soon</div>,
+          element: <Login />,
         },
         {
           path: "signup",
