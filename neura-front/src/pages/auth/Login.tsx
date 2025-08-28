@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "../../components/layout/Navbar";
 import { theme } from "../../config/theme";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function Login() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -43,20 +47,30 @@ export default function Login() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
     setIsLoading(true);
 
-    // TODO: Connect to backend API
-    console.log("Login data:", formData);
+    try {
+      const result = await login(formData.email, formData.password);
 
-    // Simulate API call
-    setTimeout(() => {
+      if (result.success) {
+        // Redirect to dashboard on successful login
+        navigate("/dashboard");
+      } else {
+        // Show error message
+        setErrors({ general: result.message });
+      }
+    } catch (error: any) {
+      setErrors({
+        general: error.message || "Login failed. Please try again.",
+      });
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -164,6 +178,13 @@ export default function Login() {
                   Forgot password?
                 </Link>
               </div>
+
+              {/* General Error */}
+              {errors.general && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <p className="text-sm text-red-400">{errors.general}</p>
+                </div>
+              )}
 
               {/* Submit Button */}
               <button

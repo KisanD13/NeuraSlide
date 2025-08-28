@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "../../components/layout/Navbar";
 import { theme } from "../../config/theme";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function Signup() {
+  const navigate = useNavigate();
+  const { signup } = useAuth();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -66,20 +70,34 @@ export default function Signup() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
     setIsLoading(true);
 
-    // TODO: Connect to backend API
-    console.log("Signup data:", formData);
+    try {
+      const result = await signup(
+        formData.name,
+        formData.email,
+        formData.teamName,
+        formData.password
+      );
 
-    // Simulate API call
-    setTimeout(() => {
+      if (result.success) {
+        // Redirect to dashboard on successful signup
+        navigate("/dashboard");
+      } else {
+        // Show error message
+        setErrors({ general: result.message });
+      }
       setIsLoading(false);
-    }, 2000);
+    } catch (error: any) {
+      setErrors({
+        general: error.message || "Signup failed. Please try again.",
+      });
+    }
   };
 
   return (
@@ -283,11 +301,19 @@ export default function Signup() {
                 <p className="text-sm text-red-400">{errors.acceptTerms}</p>
               )}
 
+              {/* General Error */}
+              {errors.general && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <p className="text-sm text-red-400">{errors.general}</p>
+                </div>
+              )}
+
               {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full ${theme.components.button.primary} ${theme.components.button.disabled}`}
+                className={`w-full ${theme.components.button.primary}
+                  ${isLoading ? theme.components.button.disabled : "cursor-pointer"}`}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center space-x-2">
