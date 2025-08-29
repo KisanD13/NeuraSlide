@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
 
 type ToastType = "success" | "error" | "warning" | "info";
 
@@ -81,19 +82,7 @@ const Toast = ({ type, message, duration = 4000, onClose }: ToastProps) => {
               }}
               className="flex-shrink-0 ml-3 text-white/80 hover:text-white transition-colors"
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X className="w-4 h-4" />
             </button>
           </div>
 
