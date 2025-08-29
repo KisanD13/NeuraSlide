@@ -69,7 +69,7 @@ export default function Login() {
       setUser(result.data.data.user);
 
       // Redirect to dashboard on successful login
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     } else {
       // Show error message
       setErrors({ general: result.message || "Login failed" });
