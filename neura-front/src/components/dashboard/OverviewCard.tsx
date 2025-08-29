@@ -31,12 +31,14 @@ export default function OverviewCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6 hover:bg-white/15 transition-all duration-200"
+      className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-4 sm:p-6 hover:bg-white/15 transition-all duration-200"
     >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-white/60 text-sm font-medium">{title}</p>
-          <p className="text-white text-2xl font-bold mt-1">{value}</p>
+          <p className="text-white text-xl sm:text-2xl font-bold mt-1">
+            {value}
+          </p>
           {change !== undefined && (
             <div className="flex items-center mt-2">
               <span
@@ -52,9 +54,11 @@ export default function OverviewCard({
           )}
         </div>
         <div
-          className={`w-12 h-12 bg-gradient-to-r ${colorClasses[color]} rounded-lg flex items-center justify-center`}
+          className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r ${colorClasses[color]} rounded-lg flex items-center justify-center`}
         >
-          {React.createElement(icon, { className: "w-6 h-6 text-white" })}
+          {React.createElement(icon, {
+            className: "w-5 h-5 sm:w-6 sm:h-6 text-white",
+          })}
         </div>
       </div>
     </motion.div>

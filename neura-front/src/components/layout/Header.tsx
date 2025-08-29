@@ -1,8 +1,12 @@
 import { useAuthContext } from "../../contexts/AuthContext";
 import { logout } from "../../pages/auth/api";
-import { Bell, Settings, ChevronDown } from "lucide-react";
+import { Bell, Settings, ChevronDown, Menu } from "lucide-react";
 
-export default function Header() {
+type HeaderProps = {
+  onMenuClick: () => void;
+};
+
+export default function Header({ onMenuClick }: HeaderProps) {
   const { user } = useAuthContext();
 
   const handleLogout = () => {
@@ -11,12 +15,24 @@ export default function Header() {
   };
 
   return (
-    <header className="h-16 bg-white/10 backdrop-blur-lg border-b border-white/20 fixed top-0 right-0 left-64 z-30">
+    <header className="h-16 bg-white/10 backdrop-blur-lg border-b border-white/20 fixed top-0 right-0 left-0 lg:left-64 z-30">
       <div className="flex items-center justify-between h-full px-6">
-        {/* Left side - Page title */}
-        <div>
-          <h1 className="text-white font-semibold text-lg">Dashboard</h1>
-          <p className="text-white/60 text-sm">Welcome back, {user?.name}</p>
+        {/* Left side - Mobile menu and Page title */}
+        <div className="flex items-center space-x-4">
+          {/* Mobile menu button */}
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 text-white/70 hover:text-white transition-colors"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
+          <div>
+            <h1 className="text-white font-semibold text-lg">Dashboard</h1>
+            <p className="text-white/60 text-sm hidden sm:block">
+              Welcome back, {user?.name}
+            </p>
+          </div>
         </div>
 
         {/* Right side - Actions */}

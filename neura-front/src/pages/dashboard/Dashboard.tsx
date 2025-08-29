@@ -51,7 +51,7 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -59,14 +59,13 @@ export default function Dashboard() {
           transition={{ duration: 0.5 }}
           className="mb-8"
         >
-          <h1 className="text-white text-3xl font-bold mb-2">Dashboard</h1>
-          <p className="text-white/60">
+          <p className="text-white/60 text-sm sm:text-base">
             Welcome to your NeuraSlide control center
           </p>
         </motion.div>
 
         {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           <OverviewCard
             title="Total Conversations"
             value={overview.totalConversations}
@@ -94,7 +93,7 @@ export default function Dashboard() {
         </div>
 
         {/* Performance Metrics */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
           {/* Automation Performance */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -195,7 +194,7 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Actions and System Health */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
