@@ -47,6 +47,11 @@ const navigationItems = [
     path: "/account",
     icon: <User className="w-5 h-5" />,
   },
+  {
+    name: "Pricing",
+    path: "/pricing",
+    icon: <Package className="w-5 h-5" />,
+  },
 ];
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
@@ -72,7 +77,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           {/* Mobile close button */}
           <button
             onClick={onClose}
-            className="lg:hidden absolute top-4 right-4 p-2 text-white/70 hover:text-white transition-colors"
+            className="lg:hidden absolute top-4 right-4 p-2 text-white/70 hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>

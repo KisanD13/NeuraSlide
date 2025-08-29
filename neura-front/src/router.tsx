@@ -9,6 +9,8 @@ import Home from "./pages/home/Home";
 import Signup from "./pages/auth/Signup";
 import Login from "./pages/auth/Login";
 import Dashboard from "./pages/dashboard/Dashboard";
+import Pricing from "./pages/pricing/Pricing";
+import InstagramConnect from "./pages/instagram/Connect";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const Router = () => {
@@ -16,6 +18,10 @@ const Router = () => {
     {
       path: "/",
       element: <Home />,
+    },
+    {
+      path: "/pricing",
+      element: <Pricing />,
     },
     {
       path: "/auth",
@@ -38,6 +44,19 @@ const Router = () => {
           element: (
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          ),
+        },
+      ],
+    },
+    {
+      path: "/instagram",
+      children: [
+        {
+          path: "connect",
+          element: (
+            <ProtectedRoute>
+              <InstagramConnect />
             </ProtectedRoute>
           ),
         },

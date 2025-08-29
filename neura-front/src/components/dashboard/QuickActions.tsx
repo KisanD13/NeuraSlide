@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Plus, Package, Lightbulb, Link } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { QuickActions as QuickActionsType } from "../../contexts/types/DashboardTypes";
 
 type QuickActionsProps = {
@@ -7,6 +8,7 @@ type QuickActionsProps = {
 };
 
 export default function QuickActions({ actions }: QuickActionsProps) {
+  const navigate = useNavigate();
   const actionItems = [
     {
       key: "createAutomation" as keyof QuickActionsType,
@@ -53,6 +55,11 @@ export default function QuickActions({ actions }: QuickActionsProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
               disabled={!isAvailable}
+              onClick={() => {
+                if (isAvailable && item.key === "connectInstagram") {
+                  navigate("/instagram/connect");
+                }
+              }}
               className={`relative p-4 rounded-lg border transition-all duration-200 text-left group ${
                 isAvailable
                   ? "bg-white/5 border-white/20 hover:bg-white/10 hover:border-white/30 cursor-pointer"

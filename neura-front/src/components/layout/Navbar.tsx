@@ -28,14 +28,14 @@ export default function Navbar({ showAuthButtons }: NavbarProps) {
               >
                 Features
               </a>
-              <a
-                href="#pricing"
+              <Link
+                to="/pricing"
                 className={
                   theme.typography.body + " hover:text-white transition-colors"
                 }
               >
                 Pricing
-              </a>
+              </Link>
               <a
                 href="#about"
                 className={

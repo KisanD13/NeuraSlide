@@ -324,7 +324,7 @@ export default function Signup() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full ${theme.components.button.primary}
+                className={`w-full ${theme.components.button.primary} cursor-pointer
                   ${isLoading ? theme.components.button.disabled : "cursor-pointer"}`}
               >
                 {isLoading ? (

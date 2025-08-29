@@ -49,11 +49,11 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
                   to="/auth/signup"
-                  className={`btn ${theme.components.button.primary} px-6 sm:px-8 py-3 text-base sm:text-lg w-full sm:w-auto border-none`}
+                  className={`btn ${theme.components.button.primary} px-6 sm:px-8 py-3 text-base sm:text-lg w-full sm:w-auto border-none cursor-pointer`}
                 >
                   Get Started Free
                 </Link>
-                <button className="btn btn-outline border-cyan-400/50 text-cyan-300 hover:bg-cyan-400/10 hover:border-cyan-400 px-6 sm:px-8 py-3 text-base sm:text-lg w-full sm:w-auto">
+                <button className="btn btn-outline border-cyan-400/50 text-cyan-300 hover:bg-cyan-400/10 hover:border-cyan-400 px-6 sm:px-8 py-3 text-base sm:text-lg w-full sm:w-auto cursor-pointer">
                   Learn More
                 </button>
               </div>
