@@ -8,6 +8,8 @@ import {
 import Home from "./pages/home/Home";
 import Signup from "./pages/auth/Signup";
 import Login from "./pages/auth/Login";
+import Dashboard from "./pages/dashboard/Dashboard";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const Router = () => {
   const router = createBrowserRouter([
@@ -33,7 +35,11 @@ const Router = () => {
       children: [
         {
           index: true,
-          element: <div>Dashboard - Coming Soon</div>,
+          element: (
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          ),
         },
       ],
     },
