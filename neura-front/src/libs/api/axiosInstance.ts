@@ -31,13 +31,20 @@ export const tokenManager = {
   // Check if token exists and is valid
   hasValidToken: (): boolean => {
     const token = tokenManager.getToken();
-    if (!token) return false;
+    if (!token) {
+      window.location.href = "/auth/login";
+      return false;
+    }
 
+    // We use try-catch here because if the token is malformed or not a valid JWT,
+    // operations like atob or JSON.parse will throw an error. Without try-catch,
+    // the app would crash on an invalid token. The try-catch ensures we safely
+    // return false if the token can't be parsed or is invalid.
     try {
-      // Basic JWT validation (check if it's not expired)
       const payload = JSON.parse(atob(token.split(".")[1]));
       return payload.exp * 1000 > Date.now();
     } catch {
+      window.location.href = "/auth/login";
       return false;
     }
   },
@@ -56,7 +63,7 @@ axiosInstance.interceptors.request.use(
   (config) => {
     const token = tokenManager.getToken();
     if (token && config.headers) {
-      if (!tokenManager.hasValidToken()) {
+      if (tokenManager.hasValidToken()) {
         config.headers.Authorization = `Bearer ${token}`;
       } else {
         tokenManager.removeToken();
@@ -67,6 +74,21 @@ axiosInstance.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle 401 errors
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token is invalid or expired
+      tokenManager.removeToken();
+      window.location.href = "/auth/login";
+    }
     return Promise.reject(error);
   }
 );
