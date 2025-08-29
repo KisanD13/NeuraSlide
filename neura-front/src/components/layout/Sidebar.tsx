@@ -8,7 +8,7 @@ import {
   BarChart3,
   User,
 } from "lucide-react";
-import { useAuthContext } from "../../contexts/AuthContext";
+import Logo from "../common/Logo";
 
 const navigationItems = [
   {
@@ -45,34 +45,12 @@ const navigationItems = [
 
 export default function Sidebar() {
   const location = useLocation();
-  const { user } = useAuthContext();
 
   return (
     <div className="w-64 bg-white/10 backdrop-blur-lg border-r border-white/20 h-screen fixed left-0 top-0 z-40">
       <div className="p-6">
-        {/* Logo */}
-        <div className="flex items-center space-x-3 mb-8">
-          <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">N</span>
-          </div>
-          <span className="text-white font-semibold text-lg">NeuraSlide</span>
-        </div>
-
-        {/* User Info */}
-        <div className="mb-8 p-4 bg-white/5 rounded-lg border border-white/10">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold">
-                {user?.name?.charAt(0) || "U"}
-              </span>
-            </div>
-            <div>
-              <p className="text-white font-medium text-sm">
-                {user?.name || "User"}
-              </p>
-              <p className="text-white/60 text-xs">{user?.email}</p>
-            </div>
-          </div>
+        <div className="mb-8">
+          <Logo />
         </div>
 
         {/* Navigation */}

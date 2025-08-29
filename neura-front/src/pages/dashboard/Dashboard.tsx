@@ -9,8 +9,11 @@ import OverviewCard from "../../components/dashboard/OverviewCard";
 import QuickActions from "../../components/dashboard/QuickActions";
 import SystemHealth from "../../components/dashboard/SystemHealth";
 import { MessageSquare, Settings, Package, Brain } from "lucide-react";
+import { getCurrentUser } from "../auth/api";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 export default function Dashboard() {
+  const { setUser } = useAuthContext();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
     null
   );
@@ -18,6 +21,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     const loadDashboardData = async () => {
+      const userResponse = await getCurrentUser();
+      if (userResponse.success && userResponse.data?.user) {
+        setUser(userResponse.data.user);
+      }
+
       const result = await callApi({
         apiFunction: getDashboardData,
         data: {},
