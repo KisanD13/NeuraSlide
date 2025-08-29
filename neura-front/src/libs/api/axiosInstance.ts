@@ -28,11 +28,10 @@ export const tokenManager = {
     localStorage.removeItem("neuraslide_token");
   },
 
-  // Check if token exists and is valid
+  // Check if token exists and is valid (without redirecting)
   hasValidToken: (): boolean => {
     const token = tokenManager.getToken();
     if (!token) {
-      window.location.href = "/auth/login";
       return false;
     }
 
@@ -44,7 +43,6 @@ export const tokenManager = {
       const payload = JSON.parse(atob(token.split(".")[1]));
       return payload.exp * 1000 > Date.now();
     } catch {
-      window.location.href = "/auth/login";
       return false;
     }
   },
@@ -68,7 +66,6 @@ axiosInstance.interceptors.request.use(
       } else {
         tokenManager.removeToken();
         Promise.reject("Session timeout");
-        window.location.href = "/auth/login";
       }
     }
     return config;
@@ -87,7 +84,6 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token is invalid or expired
       tokenManager.removeToken();
-      window.location.href = "/auth/login";
     }
     return Promise.reject(error);
   }
