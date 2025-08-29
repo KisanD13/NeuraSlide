@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "../../components/layout/Navbar";
@@ -19,6 +19,13 @@ export default function Login() {
     rememberMe: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Check if token exists on page load
+  useEffect(() => {
+    if (tokenManager.hasValidToken()) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
