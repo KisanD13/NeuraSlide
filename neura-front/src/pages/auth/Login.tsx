@@ -6,10 +6,12 @@ import { theme } from "../../config/theme";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { login } from "./api";
 import { tokenManager } from "../../libs/api/axiosInstance";
+import { useApiCall } from "../../hooks/useApiCall";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { setUser, setIsLoading: setAuthLoading } = useAuthContext();
+  const { setUser } = useAuthContext();
+  const { callApi, isLoading } = useApiCall();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -17,7 +19,6 @@ export default function Login() {
     rememberMe: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -54,34 +55,26 @@ export default function Login() {
 
     if (!validateForm()) return;
 
-    setIsLoading(true);
-    setAuthLoading(true);
-
-    try {
-      const response = await login({
+    const result = await callApi({
+      apiFunction: login,
+      data: {
         email: formData.email,
         password: formData.password,
-      });
+      },
+      fallbackSuccessMessage: "Login successful!",
+      fallbackErrorMessage: "Login failed, please try again later",
+    });
 
-      if (response.success) {
-        // Store token and set user
-        tokenManager.setToken(response.data.accessToken);
-        setUser(response.data.user);
+    if (result.success && result.data) {
+      // Store token and set user
+      tokenManager.setToken(result.data.data.accessToken);
+      setUser(result.data.data.user);
 
-        // Redirect to dashboard on successful login
-        navigate("/dashboard");
-      } else {
-        // Show error message
-        setErrors({ general: response.message });
-      }
-    } catch (error: any) {
-      setErrors({
-        general:
-          error.response?.data?.message || "Login failed. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
-      setAuthLoading(false);
+      // Redirect to dashboard on successful login
+      navigate("/dashboard");
+    } else {
+      // Show error message
+      setErrors({ general: result.message || "Login failed" });
     }
   };
 

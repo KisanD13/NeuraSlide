@@ -6,10 +6,14 @@ import { theme } from "../../config/theme";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { signup } from "./api";
 import { tokenManager } from "../../libs/api/axiosInstance";
+import { useApiCall } from "../../hooks/useApiCall";
 
 export default function Signup() {
   const navigate = useNavigate();
-  const { setUser, setIsLoading: setAuthLoading } = useAuthContext();
+  const { setUser, user } = useAuthContext();
+  const { callApi, isLoading } = useApiCall();
+
+  console.log(user);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -20,7 +24,6 @@ export default function Signup() {
     acceptTerms: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -77,36 +80,30 @@ export default function Signup() {
 
     if (!validateForm()) return;
 
-    setIsLoading(true);
-    setAuthLoading(true);
-
-    try {
-      const response = await signup({
+    const result = await callApi({
+      apiFunction: signup,
+      data: {
         name: formData.name,
         email: formData.email,
         teamName: formData.teamName,
         password: formData.password,
-      });
+      },
+      fallbackSuccessMessage: "Account created successfully!",
+      fallbackErrorMessage: "Signup failed, please try again later",
+    });
 
-      if (response.success) {
-        // Store token and set user
-        tokenManager.setToken(response.data.accessToken);
-        setUser(response.data.user);
+    console.log(result);
 
-        // Redirect to dashboard on successful signup
-        navigate("/dashboard");
-      } else {
-        // Show error message
-        setErrors({ general: response.message });
-      }
-    } catch (error: any) {
-      setErrors({
-        general:
-          error.response?.data?.message || "Signup failed. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
-      setAuthLoading(false);
+    if (result.success && result.data) {
+      // Store token and set user
+      tokenManager.setToken(result.data.data.accessToken);
+      setUser(result.data.data.user);
+
+      // Redirect to dashboard on successful signup
+      navigate("/dashboard");
+    } else {
+      // Show error message
+      setErrors({ general: result.message || "Signup failed" });
     }
   };
 
