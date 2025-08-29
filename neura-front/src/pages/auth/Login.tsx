@@ -193,7 +193,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full ${theme.components.button.primary} ${theme.components.button.disabled}`}
+                className={`w-full ${theme.components.button.primary} cursor-pointer`}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center space-x-2">

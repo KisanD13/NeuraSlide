@@ -39,6 +39,14 @@ export type UserResponse = {
   timestamp: string;
 };
 
+// Error Response type
+export type ErrorResponse = {
+  success: false;
+  message: string;
+  errorStack?: string;
+  timestamp: string;
+};
+
 // API Request types
 export type LoginRequest = {
   email: string;

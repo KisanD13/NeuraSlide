@@ -67,7 +67,7 @@ const Toast = ({ type, message, duration = 4000, onClose }: ToastProps) => {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -50, scale: 0.9 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className={`fixed top-4 right-4 z-50 max-w-sm w-full ${styles.bg} ${styles.border} border-2 rounded-xl shadow-2xl backdrop-blur-sm`}
+          className={`max-w-sm w-full ${styles.bg} ${styles.border} border-2 rounded-xl shadow-2xl backdrop-blur-sm`}
         >
           <div className="flex items-center p-4 text-white">
             <div className="flex-shrink-0 mr-3 text-xl">{styles.icon}</div>
