@@ -12,8 +12,12 @@ export const usePayment = () => {
       fallbackErrorMessage: "Failed to create subscription",
     });
 
-    if (result.success && result.data?.data?.checkoutUrl) {
+    // Backend returns: { success: true, data: { checkoutUrl, sessionId }, message: "..." }
+    if (result.success && result.data?.data?.data?.checkoutUrl) {
       // Redirect to Stripe Checkout
+      window.location.href = result.data.data.data.checkoutUrl;
+    } else if (result.success && result.data?.data?.checkoutUrl) {
+      // Alternative response structure
       window.location.href = result.data.data.checkoutUrl;
     }
   };
