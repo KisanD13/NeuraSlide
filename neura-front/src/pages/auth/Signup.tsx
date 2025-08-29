@@ -88,8 +88,6 @@ export default function Signup() {
         teamName: formData.teamName,
         password: formData.password,
       },
-      fallbackSuccessMessage: "Account created successfully!",
-      fallbackErrorMessage: "Signup failed, please try again later",
     });
 
     console.log(result);

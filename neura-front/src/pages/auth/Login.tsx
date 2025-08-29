@@ -61,8 +61,6 @@ export default function Login() {
         email: formData.email,
         password: formData.password,
       },
-      fallbackSuccessMessage: "Login successful!",
-      fallbackErrorMessage: "Login failed, please try again later",
     });
 
     if (result.success && result.data) {

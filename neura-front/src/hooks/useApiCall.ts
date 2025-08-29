@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useToast } from "./useToast";
 
 type ApiFunction<TData, TResponse> = (data: TData) => Promise<TResponse>;
 
@@ -18,13 +19,14 @@ type ApiResult<TResponse> = {
 export const useApiCall = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingCount, setLoadingCount] = useState(0);
+  const { showToast } = useToast();
 
   const callApi = useCallback(
     async <TData, TResponse>({
       apiFunction,
       data,
-      fallbackSuccessMessage = "Operation completed successfully",
-      fallbackErrorMessage = "Something went wrong, please try again later",
+      fallbackSuccessMessage,
+      fallbackErrorMessage,
     }: ApiCallOptions<TData, TResponse>): Promise<ApiResult<TResponse>> => {
       setIsLoading(true);
       setLoadingCount((prev) => prev + 1);
@@ -32,24 +34,23 @@ export const useApiCall = () => {
       try {
         const response = await apiFunction(data);
 
-        // Extract message from response
-        const message = (response as any)?.message || fallbackSuccessMessage;
+        const message =
+          (response as any)?.message || fallbackSuccessMessage || "Success";
 
-        // Show success toast (you can replace this with your toast library)
-        console.log("✅ Success:", message);
+        showToast("success", message);
 
         return {
           success: true,
           data: response,
           message,
         };
-      } catch (error: any) {
-        // Extract error message from response
+      } catch (error: unknown) {
         const errorMessage =
-          error.response?.data?.message || fallbackErrorMessage;
+          (error as any)?.response?.data?.message ||
+          fallbackErrorMessage ||
+          "An error occurred";
 
-        // Show error toast (you can replace this with your toast library)
-        console.error("❌ Error:", errorMessage);
+        showToast("error", errorMessage);
 
         return {
           success: false,
