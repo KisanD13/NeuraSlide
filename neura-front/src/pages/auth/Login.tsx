@@ -3,11 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "../../components/layout/Navbar";
 import { theme } from "../../config/theme";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuthContext } from "../../contexts/AuthContext";
+import { login } from "./api";
+import { tokenManager } from "../../libs/api/axiosInstance";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { setUser, setIsLoading: setAuthLoading } = useAuthContext();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -53,23 +55,33 @@ export default function Login() {
     if (!validateForm()) return;
 
     setIsLoading(true);
+    setAuthLoading(true);
 
     try {
-      const result = await login(formData.email, formData.password);
+      const response = await login({
+        email: formData.email,
+        password: formData.password,
+      });
 
-      if (result.success) {
+      if (response.success) {
+        // Store token and set user
+        tokenManager.setToken(response.data.accessToken);
+        setUser(response.data.user);
+
         // Redirect to dashboard on successful login
         navigate("/dashboard");
       } else {
         // Show error message
-        setErrors({ general: result.message });
+        setErrors({ general: response.message });
       }
     } catch (error: any) {
       setErrors({
-        general: error.message || "Login failed. Please try again.",
+        general:
+          error.response?.data?.message || "Login failed. Please try again.",
       });
     } finally {
       setIsLoading(false);
+      setAuthLoading(false);
     }
   };
 

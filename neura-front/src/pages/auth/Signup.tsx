@@ -3,11 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "../../components/layout/Navbar";
 import { theme } from "../../config/theme";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuthContext } from "../../contexts/AuthContext";
+import { signup } from "./api";
+import { tokenManager } from "../../libs/api/axiosInstance";
 
 export default function Signup() {
   const navigate = useNavigate();
-  const { signup } = useAuth();
+  const { setUser, setIsLoading: setAuthLoading } = useAuthContext();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -76,27 +78,35 @@ export default function Signup() {
     if (!validateForm()) return;
 
     setIsLoading(true);
+    setAuthLoading(true);
 
     try {
-      const result = await signup(
-        formData.name,
-        formData.email,
-        formData.teamName,
-        formData.password
-      );
+      const response = await signup({
+        name: formData.name,
+        email: formData.email,
+        teamName: formData.teamName,
+        password: formData.password,
+      });
 
-      if (result.success) {
+      if (response.success) {
+        // Store token and set user
+        tokenManager.setToken(response.data.accessToken);
+        setUser(response.data.user);
+
         // Redirect to dashboard on successful signup
         navigate("/dashboard");
       } else {
         // Show error message
-        setErrors({ general: result.message });
+        setErrors({ general: response.message });
       }
-      setIsLoading(false);
     } catch (error: any) {
       setErrors({
-        general: error.message || "Signup failed. Please try again.",
+        general:
+          error.response?.data?.message || "Signup failed. Please try again.",
       });
+    } finally {
+      setIsLoading(false);
+      setAuthLoading(false);
     }
   };
 
