@@ -72,8 +72,6 @@ export const config = {
     process.env["RATE_LIMIT_MAX_REQUESTS"] || "100"
   ),
 
-  // CORS
-  corsOrigin: process.env["CORS_ORIGIN"] || "http://localhost:3000",
   trustProxy: process.env["TRUST_PROXY"] === "true",
 
   // Development

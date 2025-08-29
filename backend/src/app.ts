@@ -78,7 +78,7 @@ import stripeWebhookRouter from "./webhooks/stripe/stripeWebhookRouter";
 app.get("/health", (_req, res) => {
   res.status(200).json({
     success: true,
-    message: "NeuraSlide backend is running",
+    message: "NeuraSlide backend is running" + config.frontendUrl,
     data: {
       status: "OK",
       timestamp: new Date().toISOString(),
