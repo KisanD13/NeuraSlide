@@ -11,6 +11,13 @@ export default function QuickActions({ actions }: QuickActionsProps) {
   const navigate = useNavigate();
   const actionItems = [
     {
+      key: "connectInstagram" as keyof QuickActionsType,
+      title: "Connect Instagram",
+      description: "Connect your Instagram account",
+      icon: <Link className="w-6 h-6" />,
+      color: "from-pink-500 to-pink-600",
+    },
+    {
       key: "createAutomation" as keyof QuickActionsType,
       title: "Create Automation",
       description: "Set up automated workflows",
@@ -30,13 +37,6 @@ export default function QuickActions({ actions }: QuickActionsProps) {
       description: "Test AI response generation",
       icon: <Lightbulb className="w-6 h-6" />,
       color: "from-cyan-500 to-cyan-600",
-    },
-    {
-      key: "connectInstagram" as keyof QuickActionsType,
-      title: "Connect Instagram",
-      description: "Connect your Instagram account",
-      icon: <Link className="w-6 h-6" />,
-      color: "from-pink-500 to-pink-600",
     },
   ];
 

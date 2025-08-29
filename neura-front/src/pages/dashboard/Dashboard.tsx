@@ -8,9 +8,9 @@ import DashboardSkeleton from "../../components/ui/DashboardSkeleton";
 import OverviewCard from "../../components/dashboard/OverviewCard";
 import QuickActions from "../../components/dashboard/QuickActions";
 import SystemHealth from "../../components/dashboard/SystemHealth";
-import { MessageSquare, Settings, Package, Brain } from "lucide-react";
 import { getCurrentUser } from "../auth/api";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { MessageSquare, Settings, Package, Brain } from "lucide-react";
 
 export default function Dashboard() {
   const { setUser } = useAuthContext();
@@ -64,33 +64,15 @@ export default function Dashboard() {
           </p>
         </motion.div>
 
-        {/* Overview Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pb-8">
-          <OverviewCard
-            title="Total Conversations"
-            value={overview.totalConversations}
-            icon={MessageSquare}
-            color="cyan"
-          />
-          <OverviewCard
-            title="Active Automations"
-            value={overview.activeAutomations}
-            icon={Settings}
-            color="purple"
-          />
-          <OverviewCard
-            title="Total Products"
-            value={overview.totalProducts}
-            icon={Package}
-            color="blue"
-          />
-          <OverviewCard
-            title="AI Conversations"
-            value={overview.aiConversations}
-            icon={Brain}
-            color="green"
-          />
-        </div>
+        {/* Quick Actions - Now at the top */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="pb-8"
+        >
+          <QuickActions actions={quickActions} />
+        </motion.div>
 
         {/* Performance Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pb-8">
@@ -193,14 +175,44 @@ export default function Dashboard() {
           </motion.div>
         </div>
 
-        {/* Quick Actions and System Health */}
+        {/* Overview and System Health */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
           >
-            <QuickActions actions={quickActions} />
+            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6">
+              <h3 className="text-white font-semibold text-lg pb-4">
+                Overview
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <OverviewCard
+                  title="Total Conversations"
+                  value={overview.totalConversations}
+                  icon={MessageSquare}
+                  color="cyan"
+                />
+                <OverviewCard
+                  title="Active Automations"
+                  value={overview.activeAutomations}
+                  icon={Settings}
+                  color="purple"
+                />
+                <OverviewCard
+                  title="Total Products"
+                  value={overview.totalProducts}
+                  icon={Package}
+                  color="blue"
+                />
+                <OverviewCard
+                  title="AI Conversations"
+                  value={overview.aiConversations}
+                  icon={Brain}
+                  color="green"
+                />
+              </div>
+            </div>
           </motion.div>
 
           <motion.div

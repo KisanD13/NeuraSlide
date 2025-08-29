@@ -5,7 +5,6 @@ import type { LucideIcon } from "lucide-react";
 type OverviewCardProps = {
   title: string;
   value: number | string;
-  change?: number;
   icon: LucideIcon;
   color: "cyan" | "blue" | "green" | "purple" | "orange" | "red";
 };
@@ -22,7 +21,6 @@ const colorClasses = {
 export default function OverviewCard({
   title,
   value,
-  change,
   icon,
   color,
 }: OverviewCardProps) {
@@ -31,34 +29,19 @@ export default function OverviewCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-4 sm:p-6 hover:bg-white/15 transition-all duration-200"
+      className="relative p-4 rounded-lg border border-white/20 transition-all duration-200 bg-white/5 hover:bg-white/10"
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-white/60 text-sm font-medium">{title}</p>
-          <p className="text-white text-xl sm:text-2xl font-bold pt-1">
-            {value}
-          </p>
-          {change !== undefined && (
-            <div className="flex items-center pt-2">
-              <span
-                className={`text-sm font-medium ${change >= 0 ? "text-green-400" : "text-red-400"}`}
-              >
-                {change >= 0 ? "+" : ""}
-                {change}%
-              </span>
-              <span className="text-white/40 text-sm pl-1">
-                from last month
-              </span>
-            </div>
-          )}
-        </div>
+      <div className="flex items-start space-x-3">
         <div
-          className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r ${colorClasses[color]} rounded-lg flex items-center justify-center`}
+          className={`w-10 h-10 bg-gradient-to-r ${colorClasses[color]} rounded-lg flex items-center justify-center flex-shrink-0`}
         >
           {React.createElement(icon, {
-            className: "w-5 h-5 sm:w-6 sm:h-6 text-white",
+            className: "w-6 h-6 text-white",
           })}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className="text-white font-medium text-sm">{title}</h4>
+          <p className="text-white text-xl font-bold pt-1">{value}</p>
         </div>
       </div>
     </motion.div>

@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { logout } from "../../pages/auth/api";
 import { Bell, Settings, ChevronDown, Menu } from "lucide-react";
@@ -9,6 +10,24 @@ type HeaderProps = {
 
 export default function Header({ onMenuClick }: HeaderProps) {
   const { user } = useAuthContext();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -50,8 +69,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
           </button>
 
           {/* User Menu */}
-          <div className="relative group">
-            <button className="flex items-center space-x-2 p-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center space-x-2 p-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+            >
               <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full flex items-center justify-center">
                 <span className="text-white font-semibold text-sm">
                   {user?.name?.charAt(0) || "U"}
@@ -61,7 +83,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
             </button>
 
             {/* Dropdown Menu */}
-            <div className="absolute right-0 top-full w-48 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+            <div
+              className={`absolute right-0 top-full w-48 bg-black/80 backdrop-blur-xl border border-white/40 rounded-lg shadow-2xl transition-all duration-200 ${
+                isDropdownOpen ? "opacity-100 visible" : "opacity-0 invisible"
+              }`}
+            >
               <div className="p-2">
                 <div className="px-3 py-2 text-white/60 text-sm border-b border-white/10">
                   Signed in as <span className="text-white">{user?.email}</span>
