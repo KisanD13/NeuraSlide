@@ -1,13 +1,8 @@
-import axios, {
-  type AxiosInstance,
-  type AxiosResponse,
-  type InternalAxiosRequestConfig,
-} from "axios";
+import axios from "axios";
 import CryptoJS from "crypto-js";
 
 // Environment variables
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://neuraslide.onrender.com";
+const API_BASE_URL = "https://neuraslide.onrender.com";
 const ENCRYPTION_KEY =
   import.meta.env.VITE_ENCRYPTION_KEY || "neuraslide-secret-key-2024";
 
@@ -49,7 +44,7 @@ export const tokenManager = {
 };
 
 // Create axios instance
-const axiosInstance: AxiosInstance = axios.create({
+const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
@@ -57,35 +52,21 @@ const axiosInstance: AxiosInstance = axios.create({
   },
 });
 
-// Request interceptor - Add auth token
 axiosInstance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  (config) => {
     const token = tokenManager.getToken();
     if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+      if (!tokenManager.hasValidToken()) {
+        config.headers.Authorization = `Bearer ${token}`;
+      } else {
+        tokenManager.removeToken();
+        Promise.reject("Session timeout");
+        window.location.href = "/auth/login";
+      }
     }
     return config;
   },
   (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor - Handle token expiration
-axiosInstance.interceptors.response.use(
-  (response: AxiosResponse) => {
-    return response;
-  },
-  (error) => {
-    if (error.response?.status === 401) {
-      // Check if token exists and is valid before redirecting
-      if (tokenManager.hasValidToken()) {
-        // Token exists but server says it's invalid - remove it
-        tokenManager.removeToken();
-      }
-      // Redirect to login
-      window.location.href = "/auth/login";
-    }
     return Promise.reject(error);
   }
 );
