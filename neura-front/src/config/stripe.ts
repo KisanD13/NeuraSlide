@@ -1,7 +1,7 @@
 // Stripe test configuration
 export const STRIPE_CONFIG = {
-  publishableKey: "pk_test_51O...", // Your Stripe test publishable key
-  apiUrl: "https://your-backend.com/api/stripe", // Your backend Stripe endpoint
+  publishableKey:
+    "pk_test_51S1SrURreCqcRKInSxWJ6HTzYhkcFeNLtzJJgdzn3s4Y7bmkLFz4ljot3ahBwbKMZoPuCOkKOX9geGPJbwT1bDl600ZrUHnfBs", // Replace this with your actual publishable key
 };
 
 // Test card numbers for development

@@ -7,10 +7,10 @@ type PricingCardProps = {
 };
 
 export const PricingCard = ({ plan, isPopular = false }: PricingCardProps) => {
-  const { createCheckout, loading } = usePayment();
+  const { createSubscription, loading } = usePayment();
 
   const handleSubscribe = () => {
-    createCheckout(plan.stripePriceId);
+    createSubscription(plan.stripePriceId);
   };
 
   return (

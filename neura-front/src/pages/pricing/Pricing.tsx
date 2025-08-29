@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
 import { Check, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Navbar from "../../components/layout/Navbar";
 import { theme } from "../../config/theme";
 import { usePayment } from "../../stripe/hooks/usePayment";
+import { stripeApi } from "../../stripe/utils/api";
+import { useApiCall } from "../../hooks/useApiCall";
 
 type Plan = {
   id: string;
@@ -19,93 +21,95 @@ type Plan = {
   stripePriceId: string;
 };
 
-const plans: Plan[] = [
-  {
-    id: "free",
-    name: "Free",
-    price: "$0",
-    period: "forever",
-    description: "Perfect for trying out NeuraSlide",
-    features: [
-      "50 AI replies per month",
-      "Basic Instagram integration",
-      "Standard response templates",
-      "Email support",
-    ],
-    limitations: [
-      "No advanced automations",
-      "Limited analytics",
-      "No priority support",
-    ],
-    cta: "Get Started Free",
-    popular: false,
-    color: "from-gray-500 to-gray-600",
-    stripePriceId: "price_free",
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: "$60",
-    period: "per month",
-    description: "Perfect for growing businesses",
-    features: [
-      "Unlimited AI replies",
-      "Advanced Instagram integration",
-      "Custom response templates",
-      "Automation workflows",
-      "Advanced analytics",
-      "Priority support",
-      "Product catalog management",
-      "Real-time conversation monitoring",
-    ],
-    limitations: [],
-    cta: "Start Pro Trial",
-    popular: true,
-    color: "from-cyan-500 to-blue-600",
-    stripePriceId: "price_pro_monthly",
-  },
-  {
-    id: "pro-yearly",
-    name: "Pro Annual",
-    price: "$600",
-    period: "per year",
-    description: "Save $120 with annual billing",
-    features: [
-      "Everything in Pro",
-      "2 months free",
-      "Early access to new features",
-      "Dedicated account manager",
-    ],
-    limitations: [],
-    cta: "Start Annual Trial",
-    popular: false,
-    color: "from-purple-500 to-pink-600",
-    stripePriceId: "price_pro_yearly",
-  },
-];
-
-const features = [
-  "AI-powered responses",
-  "Instagram integration",
-  "Automation workflows",
-  "Analytics dashboard",
-  "Product catalog",
-  "Real-time monitoring",
-  "Priority support",
-  "Custom templates",
-  "Multi-account support",
-  "API access",
-];
-
 export default function Pricing() {
-  const { createCheckout, loading } = usePayment();
+  const { createSubscription, loading } = usePayment();
+  const { callApi } = useApiCall();
+  const [plans, setPlans] = useState<Plan[]>([]);
+
+  // Fetch plans from backend using useApiCall
+  useEffect(() => {
+    const fetchPlans = async () => {
+      const result = await callApi({
+        apiFunction: stripeApi.getPlans,
+        data: {},
+        fallbackSuccessMessage: "Pricing plans loaded",
+        fallbackErrorMessage: "Failed to load pricing plans",
+      });
+
+      if (result.success && result.data?.data?.data) {
+        const backendPlans = result.data.data.data;
+
+        // Transform backend plans to frontend format
+        const transformedPlans: Plan[] = backendPlans.map(
+          (plan: {
+            id: string;
+            name: string;
+            price: number;
+            interval: string;
+            description: string;
+            features: Record<string, unknown>;
+            stripePriceId?: string;
+          }) => ({
+            id: plan.id,
+            name: plan.name,
+            price: `$${plan.price}`,
+            period: plan.interval === "MONTH" ? "per month" : "per year",
+            description: plan.description,
+            features: [
+              plan.features.aiReplies === -1
+                ? "Unlimited AI replies"
+                : `${plan.features.aiReplies} AI replies per month`,
+              "Instagram integration",
+              "Response templates",
+              plan.features.prioritySupport
+                ? "Priority support"
+                : "Email support",
+              ...(plan.features.advancedAutomations
+                ? ["Automation workflows"]
+                : []),
+              ...(plan.features.advancedAnalytics
+                ? ["Advanced analytics"]
+                : []),
+              ...(plan.features.productCatalog
+                ? ["Product catalog management"]
+                : []),
+              ...(plan.features.realTimeMonitoring
+                ? ["Real-time conversation monitoring"]
+                : []),
+            ],
+            limitations:
+              plan.price === 0
+                ? [
+                    "No advanced automations",
+                    "Limited analytics",
+                    "No priority support",
+                  ]
+                : [],
+            cta: plan.price === 0 ? "Get Started Free" : "Start Pro Trial",
+            popular: plan.name === "Pro Monthly",
+            color:
+              plan.name === "Pro Monthly"
+                ? "from-cyan-500 to-blue-600"
+                : plan.name === "Pro Annual"
+                  ? "from-purple-500 to-pink-600"
+                  : "from-gray-500 to-gray-600",
+            stripePriceId: plan.id, // Use the database plan ID, not Stripe price ID
+          })
+        );
+
+        setPlans(transformedPlans);
+      }
+    };
+
+    fetchPlans();
+  }, [callApi]);
 
   const handleSubscribe = (planId: string) => {
-    if (planId === "price_free") {
+    if (planId === "price_free" || planId.includes("free")) {
       // Handle free plan - redirect to dashboard or signup
       window.location.href = "/auth/signup";
     } else {
-      createCheckout(planId);
+      createSubscription(planId);
     }
   };
 
@@ -135,162 +139,152 @@ export default function Pricing() {
 
           {/* Pricing Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-16">
-            {plans.map((plan, index) => (
-              <motion.div
-                key={plan.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className={`relative bg-white/10 backdrop-blur-lg border rounded-2xl p-8 ${
-                  plan.popular
-                    ? "border-cyan-500/50 shadow-lg shadow-cyan-500/20"
-                    : "border-white/20"
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-4 py-1 rounded-full text-sm font-medium">
-                      Most Popular
-                    </span>
-                  </div>
-                )}
+            {plans.length === 0 ? (
+              <div className="col-span-3 text-center">
+                <div className="loading loading-spinner loading-lg"></div>
+                <p className="text-white/60 mt-4">Loading pricing plans...</p>
+              </div>
+            ) : (
+              plans.map((plan, index) => (
+                <motion.div
+                  key={plan.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  className={`relative bg-white/10 backdrop-blur-lg border rounded-2xl p-8 ${
+                    plan.popular
+                      ? "border-cyan-500/50 shadow-lg shadow-cyan-500/20"
+                      : "border-white/20"
+                  }`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                      <span className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-4 py-1 rounded-full text-sm font-medium">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
 
-                <div className="text-center pb-8">
-                  <h3 className="text-white text-2xl font-bold pb-2">
-                    {plan.name}
-                  </h3>
-                  <div className="pb-4">
-                    <span className="text-white text-4xl font-bold">
-                      {plan.price}
-                    </span>
-                    <span className="text-white/60 text-lg">
-                      /{plan.period}
-                    </span>
+                  <div className="text-center pb-8">
+                    <h3 className="text-white text-2xl font-bold pb-2">
+                      {plan.name}
+                    </h3>
+                    <div className="pb-4">
+                      <span className="text-white text-4xl font-bold">
+                        {plan.price}
+                      </span>
+                      <span className="text-white/60 text-lg">
+                        /{plan.period}
+                      </span>
+                    </div>
+                    <p className="text-white/60 text-sm">{plan.description}</p>
                   </div>
-                  <p className="text-white/60 text-sm">{plan.description}</p>
-                </div>
 
-                <div className="space-y-4 pb-8">
-                  <h4 className="text-white font-semibold text-sm uppercase tracking-wide">
-                    What's included:
-                  </h4>
-                  <ul className="space-y-3">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li
-                        key={featureIndex}
-                        className="flex items-start space-x-3"
-                      >
-                        <Check className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                        <span className="text-white/80 text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="space-y-4 pb-8">
+                    <h4 className="text-white font-semibold text-sm uppercase tracking-wide">
+                      What's included:
+                    </h4>
+                    <ul className="space-y-3">
+                      {plan.features.map((feature, featureIndex) => (
+                        <li key={featureIndex} className="flex items-start">
+                          <Check className="text-green-400 mt-0.5 mr-3 flex-shrink-0" />
+                          <span className="text-white/80 text-sm">
+                            {feature}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
                   {plan.limitations.length > 0 && (
-                    <>
-                      <h4 className="text-white/60 font-semibold text-sm uppercase tracking-wide pt-4">
+                    <div className="space-y-4 pb-8">
+                      <h4 className="text-white/60 font-semibold text-sm uppercase tracking-wide">
                         Limitations:
                       </h4>
                       <ul className="space-y-3">
                         {plan.limitations.map((limitation, limitationIndex) => (
                           <li
                             key={limitationIndex}
-                            className="flex items-start space-x-3"
+                            className="flex items-start"
                           >
-                            <X className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                            <X className="text-red-400 mt-0.5 mr-3 flex-shrink-0" />
                             <span className="text-white/60 text-sm">
                               {limitation}
                             </span>
                           </li>
                         ))}
                       </ul>
-                    </>
+                    </div>
                   )}
-                </div>
 
-                <button
-                  className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-200 cursor-pointer ${
-                    plan.popular
-                      ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700"
-                      : "bg-white/10 text-white border border-white/20 hover:bg-white/20"
-                  } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
-                  onClick={() => handleSubscribe(plan.stripePriceId)}
-                  disabled={loading}
-                >
-                  {loading ? "Processing..." : plan.cta}
-                </button>
-              </motion.div>
-            ))}
+                  <button
+                    onClick={() => handleSubscribe(plan.id)}
+                    disabled={loading}
+                    className={`w-full py-3 px-6 rounded-lg font-semibold text-white transition-all duration-300 transform hover:scale-105 ${
+                      plan.popular
+                        ? "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+                        : "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
+                    } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  >
+                    {loading ? (
+                      <div className="loading loading-spinner loading-sm"></div>
+                    ) : (
+                      plan.cta
+                    )}
+                  </button>
+                </motion.div>
+              ))
+            )}
           </div>
-
-          {/* Feature Comparison */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8"
-          >
-            <h2 className="text-white text-2xl font-bold text-center pb-8">
-              Feature Comparison
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-white/20">
-                    <th className="text-left text-white/60 font-medium pb-4">
-                      Feature
-                    </th>
-                    <th className="text-center text-white/60 font-medium pb-4">
-                      Free
-                    </th>
-                    <th className="text-center text-white/60 font-medium pb-4">
-                      Pro
-                    </th>
-                    <th className="text-center text-white/60 font-medium pb-4">
-                      Pro Annual
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="space-y-4">
-                  {features.map((feature, index) => (
-                    <tr key={feature} className="border-b border-white/10">
-                      <td className="text-white font-medium py-4">{feature}</td>
-                      <td className="text-center py-4">
-                        {index < 3 ? (
-                          <Check className="w-5 h-5 text-green-400 mx-auto" />
-                        ) : (
-                          <X className="w-5 h-5 text-red-400 mx-auto" />
-                        )}
-                      </td>
-                      <td className="text-center py-4">
-                        <Check className="w-5 h-5 text-green-400 mx-auto" />
-                      </td>
-                      <td className="text-center py-4">
-                        <Check className="w-5 h-5 text-green-400 mx-auto" />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </motion.div>
 
           {/* FAQ Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="text-center pt-16"
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="text-center"
           >
-            <h2 className="text-white text-2xl font-bold pb-4">
+            <h2 className="text-white text-3xl font-bold pb-8">
               Frequently Asked Questions
             </h2>
-            <p className="text-white/60 pb-8">
-              Can't find what you're looking for?{" "}
-              <Link to="/contact" className="text-cyan-400 hover:text-cyan-300">
-                Contact our support team
-              </Link>
-            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              <div className="text-left">
+                <h3 className="text-white font-semibold pb-2">
+                  Can I change my plan anytime?
+                </h3>
+                <p className="text-white/60 text-sm">
+                  Yes, you can upgrade or downgrade your plan at any time.
+                  Changes will be reflected in your next billing cycle.
+                </p>
+              </div>
+              <div className="text-left">
+                <h3 className="text-white font-semibold pb-2">
+                  Is there a free trial?
+                </h3>
+                <p className="text-white/60 text-sm">
+                  Yes! Start with our free plan and upgrade when you're ready.
+                  No credit card required to get started.
+                </p>
+              </div>
+              <div className="text-left">
+                <h3 className="text-white font-semibold pb-2">
+                  What payment methods do you accept?
+                </h3>
+                <p className="text-white/60 text-sm">
+                  We accept all major credit cards, debit cards, and digital
+                  wallets through our secure payment processor.
+                </p>
+              </div>
+              <div className="text-left">
+                <h3 className="text-white font-semibold pb-2">
+                  Can I cancel anytime?
+                </h3>
+                <p className="text-white/60 text-sm">
+                  Absolutely! You can cancel your subscription at any time with
+                  no cancellation fees or penalties.
+                </p>
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>

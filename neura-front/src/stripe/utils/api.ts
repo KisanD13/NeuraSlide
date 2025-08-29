@@ -1,35 +1,28 @@
-import axios from "../../libs/api/axiosInstance";
+import axiosInstance from "../../libs/api/axiosInstance";
 
+// Simple API functions following the same pattern as auth API
 export const stripeApi = {
-  createCheckoutSession: async (planId: string) => {
-    try {
-      return await axios.post("/stripe/create-checkout-session", { planId });
-    } catch (error) {
-      console.error("Stripe API error:", error);
+  // Get available plans (public endpoint)
+  getPlans: () => axiosInstance.get("/crystal/billing/plans"),
 
-      // Extract error message from backend response
-      if (error && typeof error === "object" && "response" in error) {
-        const axiosError = error as {
-          response?: { data?: { message?: string } };
-        };
-        if (axiosError.response?.data?.message) {
-          throw new Error(axiosError.response.data.message);
-        }
-      }
+  // Create subscription (authenticated endpoint)
+  createSubscription: (planId: string) =>
+    axiosInstance.post("/crystal/billing/subscriptions", { planId }),
 
-      if (error instanceof Error) {
-        throw new Error(error.message);
-      } else {
-        throw new Error(
-          "Payment service is not available. Please try again later."
-        );
-      }
-    }
-  },
+  // Get user subscription (authenticated endpoint)
+  getSubscription: () => axiosInstance.get("/crystal/billing/subscriptions"),
 
-  getSubscription: () => axios.get("/stripe/subscription"),
+  // Cancel subscription (authenticated endpoint)
+  cancelSubscription: (subscriptionId: string) =>
+    axiosInstance.delete(`/crystal/billing/subscriptions/${subscriptionId}`),
 
-  cancelSubscription: () => axios.post("/stripe/cancel-subscription"),
+  // Get payment methods (authenticated endpoint)
+  getPaymentMethods: () =>
+    axiosInstance.get("/crystal/billing/payment-methods"),
 
-  getPaymentMethods: () => axios.get("/stripe/payment-methods"),
+  // Get billing overview (authenticated endpoint)
+  getBillingOverview: () => axiosInstance.get("/crystal/billing/overview"),
+
+  // Get invoices (authenticated endpoint)
+  getInvoices: () => axiosInstance.get("/crystal/billing/invoices"),
 };

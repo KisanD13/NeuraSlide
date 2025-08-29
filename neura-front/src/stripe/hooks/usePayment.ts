@@ -1,27 +1,22 @@
-import { useState } from "react";
+import { useApiCall } from "../../hooks/useApiCall";
 import { stripeApi } from "../utils/api";
-import { useToast } from "../../hooks/useToast";
 
 export const usePayment = () => {
-  const [loading, setLoading] = useState(false);
-  const { showToast } = useToast();
+  const { callApi, isLoading } = useApiCall();
 
-  const createCheckout = async (planId: string) => {
-    setLoading(true);
-    try {
-      const response = await stripeApi.createCheckoutSession(planId);
-      window.location.href = response.data.url;
-    } catch (error) {
-      console.error("Payment error:", error);
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Payment service is not available. Please try again later.";
-      showToast("error", errorMessage);
-    } finally {
-      setLoading(false);
+  const createSubscription = async (planId: string) => {
+    const result = await callApi({
+      apiFunction: stripeApi.createSubscription,
+      data: planId,
+      fallbackSuccessMessage: "Redirecting to payment...",
+      fallbackErrorMessage: "Failed to create subscription",
+    });
+
+    if (result.success && result.data?.data?.checkoutUrl) {
+      // Redirect to Stripe Checkout
+      window.location.href = result.data.data.checkoutUrl;
     }
   };
 
-  return { createCheckout, loading };
+  return { createSubscription, loading: isLoading };
 };

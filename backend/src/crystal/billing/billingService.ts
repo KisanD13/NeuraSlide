@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { logger } from "../../utils/logger";
 import createHttpError from "http-errors";
+import Stripe from "stripe";
 import {
   Subscription,
   SubscriptionPlan,
@@ -15,6 +16,11 @@ import {
 } from "./billingTypes";
 
 const prisma = new PrismaClient();
+
+// Initialize Stripe
+const stripe = new Stripe(process.env["STRIPE_SECRET_KEY"]!, {
+  apiVersion: "2025-08-27.basil",
+});
 
 export class BillingService {
   // Subscription Management
@@ -46,40 +52,78 @@ export class BillingService {
         throw createHttpError(404, "Subscription plan not found or inactive");
       }
 
-      // Calculate subscription period
-      const now = new Date();
-      const trialEnd = data.trialDays
-        ? new Date(now.getTime() + data.trialDays * 24 * 60 * 60 * 1000)
-        : null;
-      const periodStart = trialEnd || now;
-      const periodEnd = new Date(periodStart);
+      // Get user for Stripe customer creation
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
 
-      if (plan.interval === "MONTH") {
-        periodEnd.setMonth(periodEnd.getMonth() + plan.intervalCount);
-      } else {
-        periodEnd.setFullYear(periodEnd.getFullYear() + plan.intervalCount);
+      if (!user) {
+        throw createHttpError(404, "User not found");
       }
 
-      // Create subscription
-      const subscription = await prisma.subscription.create({
-        data: {
-          userId,
-          planId: data.planId,
-          status: data.trialDays ? "TRIALING" : "ACTIVE",
-          currentPeriodStart: periodStart,
-          currentPeriodEnd: periodEnd,
-          trialStart: data.trialDays ? now : null,
-          trialEnd: trialEnd,
-          // Stripe integration would set these fields
-          stripeSubscriptionId: null,
-          stripeCustomerId: null,
+      // Create or get Stripe customer
+      let stripeCustomerId = user.stripeCustomerId;
+      if (!stripeCustomerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: user.name || "",
+          metadata: {
+            userId: userId,
+          },
+        });
+        stripeCustomerId = customer.id;
+
+        // Update user with Stripe customer ID
+        await prisma.user.update({
+          where: { id: userId },
+          data: { stripeCustomerId: customer.id },
+        });
+      }
+
+      // Create Stripe subscription
+      if (!plan.stripePriceId) {
+        throw createHttpError(
+          400,
+          "Plan does not have a Stripe price ID configured"
+        );
+      }
+
+      // Create Stripe Checkout Session instead of direct subscription
+      const session = await stripe.checkout.sessions.create({
+        customer: stripeCustomerId,
+        line_items: [
+          {
+            price: plan.stripePriceId,
+            quantity: 1,
+          },
+        ],
+        mode: "subscription",
+        success_url: `${
+          process.env["FRONTEND_URL"] || "http://localhost:3001"
+        }/dashboard?success=true`,
+        cancel_url: `${
+          process.env["FRONTEND_URL"] || "http://localhost:3001"
+        }/pricing?canceled=true`,
+        allow_promotion_codes: true,
+        billing_address_collection: "auto",
+        customer_update: {
+          address: "auto",
+          name: "auto",
         },
       });
 
-      // Initialize usage records for the current period
-      await this.initializeUsageRecords(userId, subscription.id, plan.features);
+      // Note: Subscription will be created via webhook when payment is completed
+      logger.info("Stripe checkout session created:", {
+        sessionId: session.id,
+        customerId: stripeCustomerId,
+        planId: data.planId,
+      });
 
-      return this.mapSubscriptionToType(subscription);
+      // Return checkout session URL for frontend to redirect
+      return {
+        checkoutUrl: session.url,
+        sessionId: session.id,
+      } as any;
     } catch (error: any) {
       logger.error("Error creating subscription:", error);
 
@@ -539,49 +583,7 @@ export class BillingService {
   }
 
   // Private helper methods
-  private async initializeUsageRecords(
-    userId: string,
-    subscriptionId: string,
-    features: any
-  ): Promise<void> {
-    const currentPeriod = new Date().toISOString().slice(0, 7);
-    const planFeatures = features as PlanFeatures;
-
-    const usageRecords = [
-      { feature: "automations", limit: planFeatures.maxAutomations },
-      { feature: "conversations", limit: planFeatures.maxConversations },
-      { feature: "products", limit: planFeatures.maxProducts },
-      { feature: "aiRequests", limit: planFeatures.maxAIRequests },
-      { feature: "campaigns", limit: planFeatures.maxCampaigns },
-      {
-        feature: "instagramAccounts",
-        limit: planFeatures.maxInstagramAccounts,
-      },
-    ];
-
-    for (const record of usageRecords) {
-      await prisma.usageRecord.upsert({
-        where: {
-          userId_feature_period: {
-            userId,
-            feature: record.feature,
-            period: currentPeriod,
-          },
-        },
-        update: {
-          limit: record.limit,
-        },
-        create: {
-          userId,
-          subscriptionId,
-          feature: record.feature,
-          usage: 0,
-          limit: record.limit,
-          period: currentPeriod,
-        },
-      });
-    }
-  }
+  // Note: Usage records are initialized in the webhook service when subscription is created
 
   private async getFeatureLimit(
     planId: string,

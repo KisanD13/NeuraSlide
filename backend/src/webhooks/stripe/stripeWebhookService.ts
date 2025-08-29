@@ -22,7 +22,7 @@ export class StripeWebhookService {
     const stripeKey = process.env["STRIPE_SECRET_KEY"];
     if (stripeKey) {
       this.stripe = new Stripe(stripeKey, {
-        apiVersion: "2025-07-30.basil",
+        apiVersion: "2025-08-27.basil",
       });
     }
     this.webhookSecret = process.env["STRIPE_WEBHOOK_SECRET"] || "";
@@ -344,7 +344,7 @@ export class StripeWebhookService {
       }
 
       // Create subscription in our database
-      await prisma.subscription.create({
+      const dbSubscription = await prisma.subscription.create({
         data: {
           userId: user.id,
           planId: plan.id,
@@ -367,6 +367,13 @@ export class StripeWebhookService {
             : null,
         },
       });
+
+      // Initialize usage records for the subscription
+      await this.initializeUsageRecords(
+        user.id,
+        dbSubscription.id,
+        plan.features
+      );
 
       return {
         success: true,
@@ -856,5 +863,77 @@ export class StripeWebhookService {
     };
 
     return statusMap[stripeStatus] || "DRAFT";
+  }
+
+  // Initialize usage records for a new subscription
+  private async initializeUsageRecords(
+    userId: string,
+    subscriptionId: string,
+    features: any
+  ): Promise<void> {
+    const currentPeriod = new Date().toISOString().slice(0, 7);
+
+    // Map our plan features to usage records
+    const usageRecords = [
+      {
+        feature: "aiReplies",
+        limit: features.aiReplies === -1 ? 999999 : features.aiReplies,
+      },
+      {
+        feature: "instagramIntegration",
+        limit: features.instagramIntegration ? 1 : 0,
+      },
+      {
+        feature: "basicTemplates",
+        limit: features.basicTemplates ? 1 : 0,
+      },
+      {
+        feature: "emailSupport",
+        limit: features.emailSupport ? 1 : 0,
+      },
+      {
+        feature: "advancedAutomations",
+        limit: features.advancedAutomations ? 1 : 0,
+      },
+      {
+        feature: "advancedAnalytics",
+        limit: features.advancedAnalytics ? 1 : 0,
+      },
+      {
+        feature: "prioritySupport",
+        limit: features.prioritySupport ? 1 : 0,
+      },
+      {
+        feature: "productCatalog",
+        limit: features.productCatalog ? 1 : 0,
+      },
+      {
+        feature: "realTimeMonitoring",
+        limit: features.realTimeMonitoring ? 1 : 0,
+      },
+    ];
+
+    for (const record of usageRecords) {
+      await prisma.usageRecord.upsert({
+        where: {
+          userId_feature_period: {
+            userId,
+            feature: record.feature,
+            period: currentPeriod,
+          },
+        },
+        update: {
+          limit: record.limit,
+        },
+        create: {
+          userId,
+          subscriptionId,
+          feature: record.feature,
+          usage: 0,
+          limit: record.limit,
+          period: currentPeriod,
+        },
+      });
+    }
   }
 }
