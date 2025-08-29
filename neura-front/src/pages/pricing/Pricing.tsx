@@ -3,9 +3,25 @@ import { Check, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/layout/Navbar";
 import { theme } from "../../config/theme";
+import { usePayment } from "../../stripe/hooks/usePayment";
 
-const plans = [
+type Plan = {
+  id: string;
+  name: string;
+  price: string;
+  period: string;
+  description: string;
+  features: string[];
+  limitations: string[];
+  cta: string;
+  popular: boolean;
+  color: string;
+  stripePriceId: string;
+};
+
+const plans: Plan[] = [
   {
+    id: "free",
     name: "Free",
     price: "$0",
     period: "forever",
@@ -24,8 +40,10 @@ const plans = [
     cta: "Get Started Free",
     popular: false,
     color: "from-gray-500 to-gray-600",
+    stripePriceId: "price_free",
   },
   {
+    id: "pro",
     name: "Pro",
     price: "$60",
     period: "per month",
@@ -44,8 +62,10 @@ const plans = [
     cta: "Start Pro Trial",
     popular: true,
     color: "from-cyan-500 to-blue-600",
+    stripePriceId: "price_pro_monthly",
   },
   {
+    id: "pro-yearly",
     name: "Pro Annual",
     price: "$600",
     period: "per year",
@@ -60,6 +80,7 @@ const plans = [
     cta: "Start Annual Trial",
     popular: false,
     color: "from-purple-500 to-pink-600",
+    stripePriceId: "price_pro_yearly",
   },
 ];
 
@@ -77,6 +98,17 @@ const features = [
 ];
 
 export default function Pricing() {
+  const { createCheckout, loading } = usePayment();
+
+  const handleSubscribe = (planId: string) => {
+    if (planId === "price_free") {
+      // Handle free plan - redirect to dashboard or signup
+      window.location.href = "/auth/signup";
+    } else {
+      createCheckout(planId);
+    }
+  };
+
   return (
     <div
       className={`min-h-screen bg-gradient-to-br ${theme.gradients.background}`}
@@ -181,9 +213,11 @@ export default function Pricing() {
                     plan.popular
                       ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700"
                       : "bg-white/10 text-white border border-white/20 hover:bg-white/20"
-                  }`}
+                  } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                  onClick={() => handleSubscribe(plan.stripePriceId)}
+                  disabled={loading}
                 >
-                  {plan.cta}
+                  {loading ? "Processing..." : plan.cta}
                 </button>
               </motion.div>
             ))}
