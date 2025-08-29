@@ -1,9 +1,16 @@
-import { useState, useContext, type ReactNode, createContext } from "react";
+import {
+  useState,
+  useContext,
+  type ReactNode,
+  createContext,
+  useEffect,
+} from "react";
 import type { User } from "./types/AuthTypes";
+import { tokenManager } from "../libs/api/axiosInstance";
+import { getCurrentUser } from "../pages/auth/api";
 
 type AuthContextType = {
   user: User | null;
-  isAuthenticated: boolean;
   setUser: (user: User | null) => void;
 };
 
@@ -20,9 +27,29 @@ export const useAuthContext = () => useContext(AuthContext);
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
 
+  // Initialize auth state on app startup
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        if (tokenManager.hasValidToken()) {
+          const response = await getCurrentUser();
+          if (response.success && response.data?.user) {
+            setUser(response.data.user);
+          } else {
+            tokenManager.removeToken();
+          }
+        }
+      } catch {
+        tokenManager.removeToken();
+        window.location.href = "/auth/login";
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
   const value: AuthContextType = {
     user,
-    isAuthenticated: !!user,
     setUser,
   };
 
