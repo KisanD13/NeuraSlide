@@ -77,12 +77,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <X className="w-5 h-5" />
           </button>
 
-          <div className="mb-8">
+          <div className="pb-8">
             <Logo />
           </div>
 
           {/* Navigation */}
-          <nav className="space-y-2">
+          <nav className="space-y-1">
             {navigationItems.map((item) => {
               const isActive = location.pathname === item.path;
 

@@ -35,11 +35,11 @@ const getStatusIcon = (status: "healthy" | "warning" | "error") => {
 export default function SystemHealth({ health }: SystemHealthProps) {
   return (
     <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6">
-      <h3 className="text-white font-semibold text-lg mb-4">System Health</h3>
+      <h3 className="text-white font-semibold text-lg pb-4">System Health</h3>
 
       {/* Instagram Connections */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
+      <div className="pb-6">
+        <div className="flex items-center justify-between pb-2">
           <h4 className="text-white/80 text-sm font-medium">
             Instagram Connections
           </h4>
@@ -88,7 +88,7 @@ export default function SystemHealth({ health }: SystemHealthProps) {
       </div>
 
       {/* Database Status */}
-      <div className="mt-4 pt-4 border-t border-white/10">
+      <div className="pt-4 border-t border-white/10">
         <div className="flex items-center justify-between">
           <span className="text-white/80 text-sm">Database</span>
           <div className="flex items-center space-x-2">
@@ -102,7 +102,7 @@ export default function SystemHealth({ health }: SystemHealthProps) {
             </span>
           </div>
         </div>
-        <div className="mt-2 text-white/40 text-xs">
+        <div className="pt-2 text-white/40 text-xs">
           Last backup: {new Date(health.lastBackup).toLocaleDateString()}
         </div>
       </div>

@@ -36,18 +36,18 @@ export default function OverviewCard({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-white/60 text-sm font-medium">{title}</p>
-          <p className="text-white text-xl sm:text-2xl font-bold mt-1">
+          <p className="text-white text-xl sm:text-2xl font-bold pt-1">
             {value}
           </p>
           {change !== undefined && (
-            <div className="flex items-center mt-2">
+            <div className="flex items-center pt-2">
               <span
                 className={`text-sm font-medium ${change >= 0 ? "text-green-400" : "text-red-400"}`}
               >
                 {change >= 0 ? "+" : ""}
                 {change}%
               </span>
-              <span className="text-white/40 text-sm ml-1">
+              <span className="text-white/40 text-sm pl-1">
                 from last month
               </span>
             </div>

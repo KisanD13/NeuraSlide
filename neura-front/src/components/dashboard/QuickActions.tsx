@@ -40,7 +40,7 @@ export default function QuickActions({ actions }: QuickActionsProps) {
 
   return (
     <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6">
-      <h3 className="text-white font-semibold text-lg mb-4">Quick Actions</h3>
+      <h3 className="text-white font-semibold text-lg pb-4">Quick Actions</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {actionItems.map((item, index) => {
           const action = actions[item.key];
@@ -69,7 +69,7 @@ export default function QuickActions({ actions }: QuickActionsProps) {
                   <h4 className="text-white font-medium text-sm">
                     {item.title}
                   </h4>
-                  <p className="text-white/60 text-xs mt-1">{action.message}</p>
+                  <p className="text-white/60 text-xs pt-1">{action.message}</p>
                 </div>
               </div>
               {!isAvailable && (

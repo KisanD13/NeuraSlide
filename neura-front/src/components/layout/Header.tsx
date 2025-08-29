@@ -40,7 +40,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
           {/* Notifications */}
           <button className="relative p-2 text-white/70 hover:text-white transition-colors">
             <Bell className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+            <span className="w-3 h-3 bg-red-500 rounded-full -translate-y-1 translate-x-1"></span>
           </button>
 
           {/* Settings */}
@@ -60,7 +60,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
             </button>
 
             {/* Dropdown Menu */}
-            <div className="absolute right-0 top-full mt-2 w-48 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+            <div className="absolute right-0 top-full w-48 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
               <div className="p-2">
                 <div className="px-3 py-2 text-white/60 text-sm border-b border-white/10">
                   Signed in as <span className="text-white">{user?.email}</span>

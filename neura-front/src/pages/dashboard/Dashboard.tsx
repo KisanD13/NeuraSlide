@@ -57,7 +57,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="pb-8"
         >
           <p className="text-white/60 text-sm sm:text-base">
             Welcome to your NeuraSlide control center
@@ -65,7 +65,7 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Overview Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pb-8">
           <OverviewCard
             title="Total Conversations"
             value={overview.totalConversations}
@@ -93,7 +93,7 @@ export default function Dashboard() {
         </div>
 
         {/* Performance Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pb-8">
           {/* Automation Performance */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -101,10 +101,10 @@ export default function Dashboard() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6"
           >
-            <h3 className="text-white font-semibold text-lg mb-4">
+            <h3 className="text-white font-semibold text-lg pb-4">
               Automation Performance
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-white/60 text-sm">Success Rate</span>
                 <span className="text-white font-semibold">
@@ -133,10 +133,10 @@ export default function Dashboard() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6"
           >
-            <h3 className="text-white font-semibold text-lg mb-4">
+            <h3 className="text-white font-semibold text-lg pb-4">
               AI Performance
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-white/60 text-sm">Response Quality</span>
                 <span className="text-white font-semibold">
@@ -165,10 +165,10 @@ export default function Dashboard() {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6"
           >
-            <h3 className="text-white font-semibold text-lg mb-4">
+            <h3 className="text-white font-semibold text-lg pb-4">
               Conversation Performance
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-white/60 text-sm">Resolution Rate</span>
                 <span className="text-white font-semibold">
