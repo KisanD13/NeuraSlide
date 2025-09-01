@@ -137,6 +137,21 @@ export type StripeSubscriptionStatus =
   | "canceled"
   | "unpaid";
 
+// Stripe Checkout Session object
+export type StripeCheckoutSession = {
+  id: string;
+  object: "checkout.session";
+  created: number;
+  customer: string;
+  payment_status: "paid" | "unpaid" | "no_payment_required";
+  subscription: string | null;
+  trial_start?: number;
+  trial_end?: number;
+  current_period_end?: number;
+  cancel_at_period_end?: boolean;
+  canceled_at?: number;
+};
+
 // Stripe Invoice object
 export type StripeInvoice = {
   id: string;

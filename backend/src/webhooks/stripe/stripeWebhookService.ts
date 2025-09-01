@@ -10,6 +10,7 @@ import {
   StripeInvoice,
   StripePaymentIntent,
   StripeCustomer,
+  StripeCheckoutSession,
 } from "./stripeWebhookTypes";
 
 const prisma = new PrismaClient();
@@ -139,6 +140,13 @@ export class StripeWebhookService {
         case "payment_intent.payment_failed":
           processingResult = await this.handlePaymentFailed(
             event.data.object as StripePaymentIntent
+          );
+          break;
+
+        // Checkout session events
+        case "checkout.session.completed":
+          processingResult = await this.handleCheckoutSessionCompleted(
+            event.data.object as StripeCheckoutSession
           );
           break;
 
@@ -746,6 +754,112 @@ export class StripeWebhookService {
       return {
         success: false,
         action: "payment_failed",
+        error: error.message,
+      };
+    }
+  }
+
+  // Handle Checkout Session Completed
+  private async handleCheckoutSessionCompleted(
+    checkoutSession: StripeCheckoutSession
+  ): Promise<WebhookProcessingResult> {
+    try {
+      logger.info("Checkout session completed", {
+        checkoutSessionId: checkoutSession.id,
+        customerId: checkoutSession.customer,
+        paymentStatus: checkoutSession.payment_status,
+      });
+
+      // Find user by Stripe customer ID
+      const user = await prisma.user.findFirst({
+        where: { stripeCustomerId: checkoutSession.customer },
+      });
+
+      if (!user) {
+        return {
+          success: false,
+          action: "checkout_session_completed",
+          error: "User not found for Stripe customer",
+        };
+      }
+
+      // Find the latest subscription for the user
+      const latestSubscription = await prisma.subscription.findFirst({
+        where: {
+          userId: user.id,
+          stripeSubscriptionId: checkoutSession.subscription,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (!latestSubscription) {
+        return {
+          success: false,
+          action: "checkout_session_completed",
+          error: "No active subscription found for this checkout session",
+        };
+      }
+
+      // Update subscription status to active if payment was successful
+      const updateData: any = {
+        status: "ACTIVE",
+        currentPeriodStart: new Date(checkoutSession.created * 1000),
+      };
+
+      if (checkoutSession.current_period_end) {
+        updateData.currentPeriodEnd = new Date(
+          checkoutSession.current_period_end * 1000
+        );
+      }
+
+      if (checkoutSession.trial_start) {
+        updateData.trialStart = new Date(checkoutSession.trial_start * 1000);
+      }
+
+      if (checkoutSession.trial_end) {
+        updateData.trialEnd = new Date(checkoutSession.trial_end * 1000);
+      }
+
+      if (checkoutSession.cancel_at_period_end !== undefined) {
+        updateData.cancelAtPeriodEnd = checkoutSession.cancel_at_period_end;
+      }
+
+      if (checkoutSession.canceled_at) {
+        updateData.canceledAt = new Date(checkoutSession.canceled_at * 1000);
+      }
+
+      await prisma.subscription.update({
+        where: { id: latestSubscription.id },
+        data: updateData,
+      });
+
+      // Get the plan to initialize usage records
+      const plan = await prisma.subscriptionPlan.findUnique({
+        where: { id: latestSubscription.planId },
+      });
+
+      if (plan) {
+        // Initialize usage records for the subscription
+        await this.initializeUsageRecords(
+          user.id,
+          latestSubscription.id,
+          plan.features
+        );
+      }
+
+      return {
+        success: true,
+        action: "checkout_session_completed",
+        details: {
+          subscriptionUpdated: true,
+          userNotified: false,
+        },
+      };
+    } catch (error: any) {
+      logger.error("Error handling checkout session completed:", error);
+      return {
+        success: false,
+        action: "checkout_session_completed",
         error: error.message,
       };
     }
