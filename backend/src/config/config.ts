@@ -26,7 +26,7 @@ export const config = {
   instagramAppSecret: process.env["INSTAGRAM_APP_SECRET"],
   instagramRedirectUri:
     process.env["INSTAGRAM_REDIRECT_URI"] ||
-    "http://localhost:5513/api/crystal/instagram/callback",
+    "https://neuraslide.onrender.com/crystal/instagram/callback",
   instagramWebhookVerifyToken:
     process.env["INSTAGRAM_WEBHOOK_VERIFY_TOKEN"] || "",
   metaWebhookVerifyToken: process.env["META_WEBHOOK_VERIFY_TOKEN"],
