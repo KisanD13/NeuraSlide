@@ -15,6 +15,7 @@ import {
   WebhookVerificationChallenge,
   WebhookSubscription,
 } from "./instagramWebhookTypes";
+import { config } from "../../config/config";
 
 const prisma = new PrismaClient();
 
@@ -23,9 +24,8 @@ export class InstagramWebhookService {
   private readonly appSecret: string;
 
   constructor() {
-    this.verifyToken =
-      process.env["INSTAGRAM_WEBHOOK_VERIFY_TOKEN"] || "neuraslide_verify";
-    this.appSecret = process.env["INSTAGRAM_APP_SECRET"] || "";
+    this.verifyToken = config.instagramWebhookVerifyToken || "";
+    this.appSecret = config.instagramAppSecret || "";
   }
 
   // Webhook Verification

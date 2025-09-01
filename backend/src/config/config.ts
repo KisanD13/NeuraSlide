@@ -27,6 +27,8 @@ export const config = {
   instagramRedirectUri:
     process.env["INSTAGRAM_REDIRECT_URI"] ||
     "http://localhost:5513/api/crystal/instagram/callback",
+  instagramWebhookVerifyToken:
+    process.env["INSTAGRAM_WEBHOOK_VERIFY_TOKEN"] || "",
   metaWebhookVerifyToken: process.env["META_WEBHOOK_VERIFY_TOKEN"],
 
   // AI Service (OpenAI)

@@ -8,6 +8,7 @@ import {
   BarChart3,
   User,
   X,
+  Instagram,
 } from "lucide-react";
 import Logo from "../common/Logo";
 
@@ -21,6 +22,11 @@ const navigationItems = [
     name: "Dashboard",
     path: "/dashboard",
     icon: <LayoutDashboard className="w-5 h-5" />,
+  },
+  {
+    name: "Instagram",
+    path: "/instagram/connect",
+    icon: <Instagram className="w-5 h-5" />,
   },
   {
     name: "Conversations",

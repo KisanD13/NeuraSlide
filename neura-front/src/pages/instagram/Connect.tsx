@@ -2,6 +2,8 @@ import { motion } from "framer-motion";
 import { Instagram, CheckCircle, AlertCircle, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import { useApiCall } from "../../hooks/useApiCall";
+import { instagramApi } from "./api";
 
 const benefits = [
   "Automated responses to comments and DMs",
@@ -19,6 +21,34 @@ const permissions = [
 ];
 
 export default function InstagramConnect() {
+  const { callApi, isLoading } = useApiCall();
+
+  const handleConnect = async () => {
+    const result = await callApi({
+      apiFunction: instagramApi.getOAuthUrl,
+      data: {},
+      fallbackSuccessMessage: "Redirecting to Instagram...",
+      fallbackErrorMessage: "Failed to get Instagram authorization URL",
+    });
+
+    console.log("Full result:", result);
+    console.log("Result data:", result.data);
+
+    // Handle nested data structure
+    if (result.success && result.data) {
+      // Navigate through the nested data structure
+      const authUrl =
+        result.data?.data?.data?.authUrl || result.data?.data?.authUrl;
+
+      if (authUrl) {
+        console.log("Redirecting to:", authUrl);
+        window.location.href = authUrl;
+      } else {
+        console.error("No authUrl found in response");
+      }
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="p-4 sm:p-6">
@@ -73,7 +103,11 @@ export default function InstagramConnect() {
               </ul>
             </div>
 
-            <button className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer">
+            <button
+              onClick={handleConnect}
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Instagram className="w-5 h-5" />
               <span>Connect Instagram</span>
               <ArrowRight className="w-4 h-4" />
@@ -125,7 +159,7 @@ export default function InstagramConnect() {
               </h3>
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
-                  <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                  <CheckCircle className="w-5 h-5 text-green-400 mt-0.5" />
                   <div>
                     <h4 className="text-white font-medium text-sm">
                       End-to-end encryption
@@ -136,7 +170,7 @@ export default function InstagramConnect() {
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                  <CheckCircle className="w-5 h-5 text-green-400 mt-0.5" />
                   <div>
                     <h4 className="text-white font-medium text-sm">
                       SOC 2 compliant
@@ -147,7 +181,7 @@ export default function InstagramConnect() {
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                  <CheckCircle className="w-5 h-5 text-green-400 mt-0.5" />
                   <div>
                     <h4 className="text-white font-medium text-sm">
                       GDPR compliant
