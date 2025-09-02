@@ -1,8 +1,11 @@
 import { motion } from "framer-motion";
 import { Instagram, CheckCircle, AlertCircle, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { useApiCall } from "../../hooks/useApiCall";
+import { useAuthContext } from "../../contexts/AuthContext";
+import { getCurrentUser } from "../auth/api";
 import { instagramApi } from "./api";
 
 const benefits = [
@@ -22,10 +25,32 @@ const permissions = [
 
 export default function InstagramConnect() {
   const { callApi, isLoading } = useApiCall();
+  const { user, setUser } = useAuthContext();
+
+  // Load user data if not already loaded
+  useEffect(() => {
+    const loadUser = async () => {
+      if (!user) {
+        const userResponse = await getCurrentUser();
+        if (userResponse.success && userResponse.data?.user) {
+          setUser(userResponse.data.user);
+        }
+      }
+    };
+
+    loadUser();
+  }, [user, setUser]);
 
   const handleConnect = async () => {
+    if (!user?.id) {
+      console.error("User not loaded or no user ID");
+      return;
+    }
+
+    console.log("Using user ID:", user.id);
+
     const result = await callApi({
-      apiFunction: instagramApi.getOAuthUrl,
+      apiFunction: () => instagramApi.getOAuthUrl(user.id),
       data: {},
       fallbackSuccessMessage: "Redirecting to Instagram...",
       fallbackErrorMessage: "Failed to get Instagram authorization URL",

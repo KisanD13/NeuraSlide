@@ -1,7 +1,10 @@
 import axiosInstance from "../../libs/api/axiosInstance";
 
 export const instagramApi = {
-  getOAuthUrl: () => axiosInstance.get("/crystal/instagram/oauth-url"),
+  getOAuthUrl: (userId?: string) => {
+    const params = userId ? `?userId=${userId}` : "";
+    return axiosInstance.get(`/crystal/instagram/oauth-url${params}`);
+  },
 
   handleOAuthCallback: (code: string, state: string) =>
     axiosInstance.get(
