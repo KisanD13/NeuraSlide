@@ -67,7 +67,9 @@ export class InstagramController {
       // This should be implemented with proper state storage/verification
 
       // For now, extract user ID from state (simplified approach)
-      const userId = this.extractUserIdFromState(callbackData.state);
+      const userId = InstagramController.extractUserIdFromState(
+        callbackData.state
+      );
       if (!userId) {
         return next(createHttpError(400, "Invalid state parameter"));
       }
@@ -83,7 +85,13 @@ export class InstagramController {
       );
 
       // Redirect to frontend with success message
-      const frontendUrl = config.frontendUrl;
+      const frontendUrl =
+        config.frontendUrl || `${req.protocol}://${req.get("host")}`;
+
+      logger.info(
+        `Redirecting to: ${frontendUrl}/dashboard?instagram=connected&username=${account.username}`
+      );
+
       res.redirect(
         `${frontendUrl}/dashboard?instagram=connected&username=${account.username}`
       );

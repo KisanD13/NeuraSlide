@@ -9,7 +9,7 @@ export const config = {
   // Server Configuration
   port: process.env["PORT"] || 5513,
   env: process.env["NODE_ENV"] || "development",
-  frontendUrl: "http://localhost:3001",
+  frontendUrl: process.env["FRONTEND_URL"] || "http://localhost:3001",
 
   // Database
   databaseUrl:
