@@ -24,17 +24,7 @@ export class InstagramService {
     appId: config.instagramAppId as string,
     appSecret: config.instagramAppSecret as string,
     redirectUri: config.instagramRedirectUri as string,
-    scopes: [
-      "email",
-      "public_profile",
-      "pages_show_list",
-      "pages_read_engagement",
-      "pages_manage_metadata",
-      "instagram_basic",
-      "instagram_manage_comments",
-      "instagram_manage_messages",
-      "business_management",
-    ],
+    scopes: ["email", "public_profile", "instagram_basic"],
     apiVersion: "v19.0",
     baseUrl: "https://graph.facebook.com",
   };
