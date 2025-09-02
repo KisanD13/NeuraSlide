@@ -288,19 +288,11 @@ export class InstagramService {
 
       logger.info(`First page: ${pages[0].name} (ID: ${pages[0].id})`);
 
-      // Temporarily use basic profile data to test redirect
-      const instagramAccount = {
-        id: "temp_ig_id",
-        username: "sagar_d_13_slide",
-        name: "Test Account",
-        profile_picture_url: "",
-        followers_count: 0,
-        follows_count: 0,
-        media_count: 0,
-        account_type: "BUSINESS",
-        website: "",
-        biography: "",
-      };
+      // Get Instagram Business account from the first page
+      const instagramAccount = await this.getInstagramBusinessAccount(
+        pages[0].id,
+        pages[0].access_token
+      );
 
       // Check if account already connected
       const existingAccount = await this.findAccountByInstagramId(
