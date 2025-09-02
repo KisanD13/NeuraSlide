@@ -378,4 +378,104 @@ export class InstagramController {
       return null;
     }
   }
+
+  /**
+   * Reply to an Instagram comment
+   * POST /crystal/instagram/comments/:commentId/reply
+   */
+  static async replyToComment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user?.sub;
+      const { commentId } = req.params;
+      const { replyText, accountId } = req.body;
+
+      if (!userId) {
+        return next(createHttpError(401, "User not authenticated"));
+      }
+
+      if (!commentId) {
+        return next(createHttpError(400, "Comment ID is required"));
+      }
+
+      if (!replyText) {
+        return next(createHttpError(400, "Reply text is required"));
+      }
+
+      if (!accountId) {
+        return next(createHttpError(400, "Account ID is required"));
+      }
+
+      // Reply to the comment
+      const result = await InstagramService.replyToComment(
+        accountId,
+        commentId,
+        replyText
+      );
+
+      logger.info(`Comment reply posted: ${commentId} by user: ${userId}`);
+
+      res.status(200).json({
+        success: true,
+        message: "Comment reply posted successfully",
+        data: {
+          commentId,
+          replyText,
+          result,
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      return next(error);
+    }
+  }
+
+  /**
+   * Get comment details
+   * GET /crystal/instagram/comments/:commentId
+   */
+  static async getCommentDetails(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const userId = (req as any).user?.sub;
+      const { commentId } = req.params;
+      const { accountId } = req.query;
+
+      if (!userId) {
+        return next(createHttpError(401, "User not authenticated"));
+      }
+
+      if (!commentId) {
+        return next(createHttpError(400, "Comment ID is required"));
+      }
+
+      if (!accountId) {
+        return next(createHttpError(400, "Account ID is required"));
+      }
+
+      // Get comment details
+      const comment = await InstagramService.getCommentDetails(
+        accountId as string,
+        commentId
+      );
+
+      logger.info(`Comment details retrieved: ${commentId} by user: ${userId}`);
+
+      res.status(200).json({
+        success: true,
+        message: "Comment details retrieved successfully",
+        data: {
+          commentId,
+          comment,
+          timestamp: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      return next(error);
+    }
+  }
 }

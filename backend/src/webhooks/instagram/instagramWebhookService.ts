@@ -266,15 +266,30 @@ export class InstagramWebhookService {
         data: event,
       });
 
-      // TODO: Implement automation triggers for comments and mentions
-      // This would involve checking if there are automations set up for these events
+      // Trigger automation for comments and mentions
+      let automationTriggered = false;
+      let responseGenerated = false;
+
+      if (eventType === "COMMENT_CREATED") {
+        try {
+          const automationResult = await this.triggerCommentAutomation(
+            instagramUserId,
+            event,
+            processedEvent.id
+          );
+          automationTriggered = automationResult.triggered;
+          responseGenerated = automationResult.responseGenerated;
+        } catch (error) {
+          logger.error("Error triggering comment automation:", error);
+        }
+      }
 
       return {
         success: true,
         eventId: processedEvent.id,
         eventType,
-        automationTriggered: false,
-        responseGenerated: false,
+        automationTriggered,
+        responseGenerated,
         error: null,
       };
     } catch (error: any) {
@@ -597,6 +612,169 @@ export class InstagramWebhookService {
         500,
         "Unable to create webhook subscription. Please try again."
       );
+    }
+  }
+
+  // ==============================================
+  // COMMENT AUTOMATION METHODS
+  // ==============================================
+
+  /**
+   * Trigger automation for Instagram comments
+   */
+  private async triggerCommentAutomation(
+    instagramUserId: string,
+    commentEvent: InstagramChangeEvent,
+    eventId: string
+  ): Promise<{ triggered: boolean; responseGenerated: boolean }> {
+    try {
+      logger.info("Triggering comment automation", {
+        instagramUserId,
+        commentId: commentEvent.value.comment_id,
+        eventId,
+      });
+
+      // Find the Instagram account
+      const instagramAccount = await prisma.instagramAccount.findFirst({
+        where: { igUserId: instagramUserId },
+      });
+
+      if (!instagramAccount) {
+        logger.warn("Instagram account not found for automation", {
+          instagramUserId,
+        });
+        return { triggered: false, responseGenerated: false };
+      }
+
+      // Find active automations for this user
+      const automations = await prisma.automation.findMany({
+        where: {
+          userId: instagramAccount.teamId, // Use teamId to find user
+          isActive: true,
+          status: "ACTIVE",
+        },
+      });
+
+      if (automations.length === 0) {
+        logger.info("No active automations found for user", {
+          userId: instagramAccount.teamId,
+        });
+        return { triggered: false, responseGenerated: false };
+      }
+
+      // Find automation that triggers on comments
+      const commentAutomation = automations.find((automation) => {
+        const trigger = automation.trigger as any;
+        return trigger.type === "comment_received";
+      });
+
+      if (!commentAutomation) {
+        logger.info("No comment automation found", {
+          automations: automations.map((a) => a.name),
+        });
+        return { triggered: false, responseGenerated: false };
+      }
+
+      logger.info("Comment automation found and triggered", {
+        automationId: commentAutomation.id,
+        automationName: commentAutomation.name,
+      });
+
+      // Generate and post reply
+      const replyGenerated = await this.generateAndPostReply(
+        commentAutomation,
+        commentEvent,
+        instagramAccount
+      );
+
+      return {
+        triggered: true,
+        responseGenerated: replyGenerated,
+      };
+    } catch (error: any) {
+      logger.error("Error in comment automation:", error);
+      return { triggered: false, responseGenerated: false };
+    }
+  }
+
+  /**
+   * Generate and post reply to comment
+   */
+  private async generateAndPostReply(
+    automation: any,
+    commentEvent: InstagramChangeEvent,
+    instagramAccount: any
+  ): Promise<boolean> {
+    try {
+      const commentId = commentEvent.value.comment_id;
+      const commentText = commentEvent.value.text;
+
+      if (!commentId || !commentText) {
+        logger.warn("Missing comment data for reply", {
+          commentId,
+          commentText,
+        });
+        return false;
+      }
+
+      // Generate AI response using existing AI service
+      const aiResponse = await this.generateAIResponse(commentText, automation);
+
+      if (!aiResponse) {
+        logger.warn("Failed to generate AI response");
+        return false;
+      }
+
+      // Post reply using Instagram service
+      const { InstagramService } = await import(
+        "../../crystal/instagram/instagramService"
+      );
+      await InstagramService.replyToComment(
+        instagramAccount.id,
+        commentId,
+        aiResponse
+      );
+
+      logger.info("Successfully posted automated reply", {
+        commentId,
+        replyText: aiResponse,
+        automationId: automation.id,
+      });
+
+      return true;
+    } catch (error: any) {
+      logger.error("Error generating and posting reply:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Generate AI response for comment
+   */
+  private async generateAIResponse(
+    commentText: string,
+    automation: any
+  ): Promise<string | null> {
+    try {
+      // Use existing AI service to generate response
+      const { AIService } = await import("../../crystal/ai/aiService");
+
+      const response = await AIService.generateResponse(automation.userId, {
+        message: commentText,
+        context: {
+          businessContext: {
+            businessName: "NeuraSlide",
+            industry: "social_media_automation",
+            tone: "friendly",
+          },
+        },
+        maxTokens: 200,
+      });
+
+      return response.response;
+    } catch (error: any) {
+      logger.error("Error generating AI response:", error);
+      return null;
     }
   }
 }

@@ -43,4 +43,14 @@ instagramRouter.get(
   InstagramController.testConnection
 );
 
+// Instagram comment management routes
+instagramRouter.post(
+  "/comments/:commentId/reply",
+  InstagramController.replyToComment
+);
+instagramRouter.get(
+  "/comments/:commentId",
+  InstagramController.getCommentDetails
+);
+
 export default instagramRouter;
