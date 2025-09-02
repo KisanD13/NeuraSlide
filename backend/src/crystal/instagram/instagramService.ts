@@ -24,9 +24,19 @@ export class InstagramService {
     appId: config.instagramAppId as string,
     appSecret: config.instagramAppSecret as string,
     redirectUri: config.instagramRedirectUri as string,
-    scopes: ["user_profile", "user_media"],
-    apiVersion: "v18.0",
-    baseUrl: "https://graph.instagram.com",
+    scopes: [
+      "email",
+      "public_profile",
+      "pages_show_list",
+      "pages_read_engagement",
+      "pages_manage_metadata",
+      "instagram_basic",
+      "instagram_manage_comments",
+      "instagram_manage_messages",
+      "business_management",
+    ],
+    apiVersion: "v19.0",
+    baseUrl: "https://graph.facebook.com",
   };
 
   /**
@@ -45,7 +55,7 @@ export class InstagramService {
         state: state,
       });
 
-      const authUrl = `https://api.instagram.com/oauth/authorize?${params.toString()}`;
+      const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`;
 
       logger.info(`Generated Instagram OAuth URL for user: ${userId}`);
 
@@ -72,22 +82,25 @@ export class InstagramService {
    */
   static async exchangeCodeForToken(code: string): Promise<InstagramTokens> {
     try {
-      const tokenUrl = `https://api.instagram.com/oauth/access_token`;
+      const tokenUrl = new URL(
+        `https://graph.facebook.com/v19.0/oauth/access_token`
+      );
+      tokenUrl.searchParams.append("client_id", this.INSTAGRAM_CONFIG.appId);
+      tokenUrl.searchParams.append(
+        "client_secret",
+        this.INSTAGRAM_CONFIG.appSecret
+      );
+      tokenUrl.searchParams.append(
+        "redirect_uri",
+        this.INSTAGRAM_CONFIG.redirectUri
+      );
+      tokenUrl.searchParams.append("code", code);
 
-      const body = new URLSearchParams({
-        client_id: this.INSTAGRAM_CONFIG.appId,
-        client_secret: this.INSTAGRAM_CONFIG.appSecret,
-        grant_type: "authorization_code",
-        redirect_uri: this.INSTAGRAM_CONFIG.redirectUri,
-        code: code,
-      });
-
-      const response = await fetch(tokenUrl, {
-        method: "POST",
+      const response = await fetch(tokenUrl.toString(), {
+        method: "GET",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
-        body: body,
       });
 
       const data = (await response.json()) as InstagramTokenResponse;
@@ -135,7 +148,7 @@ export class InstagramService {
         "biography",
       ].join(",");
 
-      const url = `${this.INSTAGRAM_CONFIG.baseUrl}/me?fields=${fields}&access_token=${accessToken}`;
+      const url = `https://graph.facebook.com/v19.0/me?fields=${fields}&access_token=${accessToken}`;
 
       const response = await fetch(url);
       const data = (await response.json()) as InstagramUser;
@@ -165,15 +178,15 @@ export class InstagramService {
     shortToken: string
   ): Promise<InstagramTokens> {
     try {
-      const url = `${this.INSTAGRAM_CONFIG.baseUrl}/access_token`;
+      const url = new URL(
+        `https://graph.facebook.com/v19.0/oauth/access_token`
+      );
+      url.searchParams.append("grant_type", "fb_exchange_token");
+      url.searchParams.append("client_id", this.INSTAGRAM_CONFIG.appId);
+      url.searchParams.append("client_secret", this.INSTAGRAM_CONFIG.appSecret);
+      url.searchParams.append("fb_exchange_token", shortToken);
 
-      const params = new URLSearchParams({
-        grant_type: "ig_exchange_token",
-        client_secret: this.INSTAGRAM_CONFIG.appSecret,
-        access_token: shortToken,
-      });
-
-      const response = await fetch(`${url}?${params.toString()}`);
+      const response = await fetch(url.toString());
       const data = (await response.json()) as InstagramLongLivedTokenResponse;
 
       if (!response.ok) {
@@ -206,14 +219,15 @@ export class InstagramService {
     currentToken: string
   ): Promise<InstagramTokens> {
     try {
-      const url = `${this.INSTAGRAM_CONFIG.baseUrl}/refresh_access_token`;
+      const url = new URL(
+        `https://graph.facebook.com/v19.0/oauth/access_token`
+      );
+      url.searchParams.append("grant_type", "fb_exchange_token");
+      url.searchParams.append("client_id", this.INSTAGRAM_CONFIG.appId);
+      url.searchParams.append("client_secret", this.INSTAGRAM_CONFIG.appSecret);
+      url.searchParams.append("fb_exchange_token", currentToken);
 
-      const params = new URLSearchParams({
-        grant_type: "ig_refresh_token",
-        access_token: currentToken,
-      });
-
-      const response = await fetch(`${url}?${params.toString()}`);
+      const response = await fetch(url.toString());
       const data = (await response.json()) as InstagramRefreshTokenResponse;
 
       if (!response.ok) {
@@ -255,23 +269,38 @@ export class InstagramService {
         shortTokenData.accessToken
       );
 
-      // Get user profile
-      const profile = await this.getUserProfile(longTokenData.accessToken);
+      // Get Facebook Pages (required for Instagram Business accounts)
+      const pages = await this.getUserPages(longTokenData.accessToken);
+
+      if (!pages || pages.length === 0) {
+        throw createHttpError(
+          400,
+          "No Facebook Pages found. You need a Facebook Page connected to an Instagram Business account."
+        );
+      }
+
+      // Get Instagram Business account from the first page
+      const instagramAccount = await this.getInstagramBusinessAccount(
+        pages[0].id,
+        pages[0].access_token
+      );
 
       // Check if account already connected
-      const existingAccount = await this.findAccountByInstagramId(profile.id);
+      const existingAccount = await this.findAccountByInstagramId(
+        instagramAccount.id
+      );
       if (existingAccount) {
         throw createHttpError(409, "Instagram account is already connected");
       }
 
       // Create account record
-      const instagramAccount: InstagramAccount = {
+      const accountRecord: InstagramAccount = {
         id: this.generateAccountId(), // Will be replaced by database
         userId: userId,
-        instagramId: profile.id,
-        username: profile.username,
-        name: profile.name,
-        profilePictureUrl: profile.profile_picture_url,
+        instagramId: instagramAccount.id,
+        username: instagramAccount.username,
+        name: instagramAccount.name,
+        profilePictureUrl: instagramAccount.profile_picture_url,
         accessToken: longTokenData.accessToken,
         tokenType: "user",
         expiresAt: longTokenData.expiresIn
@@ -281,20 +310,20 @@ export class InstagramService {
         isActive: true,
         connectedAt: new Date(),
         metadata: {
-          followerCount: profile.followers_count || 0,
-          followingCount: profile.follows_count || 0,
-          mediaCount: profile.media_count || 0,
-          accountType: profile.account_type?.toLowerCase() as any,
-          website: profile.website,
-          biography: profile.biography,
+          followerCount: instagramAccount.followers_count || 0,
+          followingCount: instagramAccount.follows_count || 0,
+          mediaCount: instagramAccount.media_count || 0,
+          accountType: instagramAccount.account_type?.toLowerCase() as any,
+          website: instagramAccount.website,
+          biography: instagramAccount.biography,
         },
       };
 
       // Save to database (placeholder - will implement with Prisma)
-      const savedAccount = await this.saveInstagramAccount(instagramAccount);
+      const savedAccount = await this.saveInstagramAccount(accountRecord);
 
       logger.info(
-        `Connected Instagram account: ${profile.username} for user: ${userId}`
+        `Connected Instagram account: ${instagramAccount.username} for user: ${userId}`
       );
 
       return savedAccount;
@@ -663,6 +692,61 @@ export class InstagramService {
     } catch (error: any) {
       logger.error("Error deleting Instagram account:", error);
       throw createHttpError(500, "Failed to delete Instagram account");
+    }
+  }
+
+  /**
+   * Get user's Facebook Pages
+   */
+  private static async getUserPages(accessToken: string): Promise<any[]> {
+    try {
+      const url = `https://graph.facebook.com/v19.0/me/accounts?access_token=${accessToken}`;
+      const response = await fetch(url);
+      const data = (await response.json()) as any;
+
+      if (!response.ok) {
+        logger.error("Failed to fetch Facebook Pages:", data);
+        throw createHttpError(400, "Failed to fetch Facebook Pages");
+      }
+
+      return data.data || [];
+    } catch (error: any) {
+      logger.error("Error fetching Facebook Pages:", error);
+      throw createHttpError(500, "Unable to fetch Facebook Pages");
+    }
+  }
+
+  /**
+   * Get Instagram Business Account from Facebook Page
+   */
+  private static async getInstagramBusinessAccount(
+    pageId: string,
+    pageAccessToken: string
+  ): Promise<any> {
+    try {
+      const url = `https://graph.facebook.com/v19.0/${pageId}?fields=instagram_business_account{id,username,name,profile_picture_url,followers_count,follows_count,media_count,account_type,website,biography}&access_token=${pageAccessToken}`;
+      const response = await fetch(url);
+      const data = (await response.json()) as any;
+
+      if (!response.ok) {
+        logger.error("Failed to fetch Instagram Business Account:", data);
+        throw createHttpError(
+          400,
+          "Failed to fetch Instagram Business Account"
+        );
+      }
+
+      if (!data.instagram_business_account) {
+        throw createHttpError(
+          400,
+          "No Instagram Business Account found for this Facebook Page. Please connect your Instagram account to your Facebook Page."
+        );
+      }
+
+      return data.instagram_business_account;
+    } catch (error: any) {
+      logger.error("Error fetching Instagram Business Account:", error);
+      throw createHttpError(500, "Unable to fetch Instagram Business Account");
     }
   }
 }
