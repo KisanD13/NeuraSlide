@@ -260,6 +260,14 @@ export class InstagramService {
     connectData: ConnectInstagramRequest
   ): Promise<InstagramAccount> {
     try {
+      // Get user's team ID (Instagram accounts belong to teams, not users directly)
+      const teamMember = await prisma.teamMember.findFirst({
+        where: { userId: userId },
+        include: { team: true },
+      });
+
+      const teamId = teamMember?.teamId || userId; // Use team ID or user ID as fallback
+
       // Exchange code for short-lived token
       const shortTokenData = await this.exchangeCodeForToken(connectData.code);
 
@@ -305,7 +313,7 @@ export class InstagramService {
       // Create account record
       const accountRecord: InstagramAccount = {
         id: this.generateAccountId(), // Will be replaced by database
-        userId: userId,
+        userId: teamId, // Use the team ID we found
         instagramId: instagramAccount.id,
         username: instagramAccount.username,
         name: instagramAccount.name,
@@ -528,7 +536,7 @@ export class InstagramService {
       // Map InstagramAccount interface to Prisma schema
       const savedAccount = await prisma.instagramAccount.create({
         data: {
-          teamId: account.userId, // Using userId as teamId for now
+          teamId: account.userId, // Now correctly using team ID
           igUserId: account.instagramId,
           igUsername: account.username,
           accessToken: account.accessToken,
