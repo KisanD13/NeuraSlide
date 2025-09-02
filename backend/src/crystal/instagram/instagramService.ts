@@ -567,8 +567,14 @@ export class InstagramService {
         metadata: savedAccount.meta as any,
       };
     } catch (error: any) {
-      logger.error("Error saving Instagram account:", error);
-      throw createHttpError(500, "Failed to save Instagram account");
+      logger.error("DETAILED DATABASE ERROR:", error);
+      logger.error("Error message:", error.message);
+      logger.error("Error code:", error.code);
+      logger.error(
+        "Account data being saved:",
+        JSON.stringify(account, null, 2)
+      );
+      throw createHttpError(500, `Database save failed: ${error.message}`);
     }
   }
 
