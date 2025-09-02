@@ -512,7 +512,7 @@ export class InstagramService {
   private static generateSecureState(userId: string): string {
     const timestamp = Date.now().toString();
     const random = Math.random().toString(36).substring(2);
-    const userHash = Buffer.from(userId).toString("base64").substring(0, 8);
+    const userHash = Buffer.from(userId).toString("base64"); // Don't truncate!
 
     return `${userHash}_${timestamp}_${random}`;
   }
