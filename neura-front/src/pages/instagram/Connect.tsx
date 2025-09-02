@@ -1,7 +1,13 @@
 import { motion } from "framer-motion";
-import { Instagram, CheckCircle, AlertCircle, ArrowRight } from "lucide-react";
+import {
+  Instagram,
+  CheckCircle,
+  AlertCircle,
+  ArrowRight,
+  Trash2,
+} from "lucide-react";
 import { Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { useApiCall } from "../../hooks/useApiCall";
 import { useAuthContext } from "../../contexts/AuthContext";
@@ -26,6 +32,9 @@ const permissions = [
 export default function InstagramConnect() {
   const { callApi, isLoading } = useApiCall();
   const { user, setUser } = useAuthContext();
+  const [connectedAccounts, setConnectedAccounts] = useState<
+    Array<{ id: string; username: string }>
+  >([]);
 
   // Load user data if not already loaded
   useEffect(() => {
@@ -40,6 +49,25 @@ export default function InstagramConnect() {
 
     loadUser();
   }, [user, setUser]);
+
+  // Load connected Instagram accounts
+  useEffect(() => {
+    const loadConnectedAccounts = async () => {
+      if (user?.id) {
+        try {
+          const response = await instagramApi.getConnectedAccounts();
+          console.log("API Response:", response.data); // Debug log
+          if (response.data?.data?.accounts) {
+            setConnectedAccounts(response.data.data.accounts || []);
+          }
+        } catch (error) {
+          console.error("Failed to load connected accounts:", error);
+        }
+      }
+    };
+
+    loadConnectedAccounts();
+  }, [user?.id]);
 
   const handleConnect = async () => {
     if (!user?.id) {
@@ -74,6 +102,19 @@ export default function InstagramConnect() {
     }
   };
 
+  const handleDisconnect = async (accountId: string) => {
+    try {
+      await instagramApi.disconnectAccount(accountId);
+      // Reload connected accounts
+      const response = await instagramApi.getConnectedAccounts();
+      if (response.data?.success) {
+        setConnectedAccounts(response.data.data || []);
+      }
+    } catch (error) {
+      console.error("Failed to disconnect account:", error);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="p-4 sm:p-6">
@@ -93,6 +134,50 @@ export default function InstagramConnect() {
           </p>
         </motion.div>
 
+        {/* Connected Accounts Status */}
+        {connectedAccounts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mb-8"
+          >
+            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6">
+              <h3 className="text-white font-semibold text-lg pb-4">
+                Connected Instagram Accounts
+              </h3>
+              <div className="space-y-3">
+                {connectedAccounts.map((account) => (
+                  <div
+                    key={account.id}
+                    className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Instagram className="w-5 h-5 text-cyan-400" />
+                      <span className="text-white font-medium">
+                        @{account.username}
+                      </span>
+                      <span className="text-green-400 text-xs">
+                        ● Connected
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleDisconnect(account.id)}
+                      className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-red-500/10 transition-colors"
+                      title="Disconnect account"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <p className="text-white/60 text-xs pt-3">
+                You can disconnect accounts to reconnect them or add new ones
+              </p>
+            </div>
+          </motion.div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Connection Card */}
           <motion.div
@@ -106,11 +191,14 @@ export default function InstagramConnect() {
                 <Instagram className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-white text-xl font-semibold pb-2">
-                Connect Your Instagram Account
+                {connectedAccounts.length > 0
+                  ? "Add Another Instagram Account"
+                  : "Connect Your Instagram Account"}
               </h2>
               <p className="text-white/60 text-sm">
-                Securely connect your Instagram account to enable AI-powered
-                automation
+                {connectedAccounts.length > 0
+                  ? "Connect additional Instagram accounts to manage multiple profiles"
+                  : "Securely connect your Instagram account to enable AI-powered automation"}
               </p>
             </div>
 
