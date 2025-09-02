@@ -269,7 +269,15 @@ export class InstagramService {
       );
 
       // Get Facebook Pages (required for Instagram Business accounts)
+      logger.info(
+        `Using access token for pages: ${longTokenData.accessToken.substring(
+          0,
+          20
+        )}...`
+      );
       const pages = await this.getUserPages(longTokenData.accessToken);
+
+      logger.info(`Found ${pages.length} Facebook pages`);
 
       if (!pages || pages.length === 0) {
         throw createHttpError(
@@ -278,11 +286,21 @@ export class InstagramService {
         );
       }
 
-      // Get Instagram Business account from the first page
-      const instagramAccount = await this.getInstagramBusinessAccount(
-        pages[0].id,
-        pages[0].access_token
-      );
+      logger.info(`First page: ${pages[0].name} (ID: ${pages[0].id})`);
+
+      // Temporarily use basic profile data to test redirect
+      const instagramAccount = {
+        id: "temp_ig_id",
+        username: "sagar_d_13_slide",
+        name: "Test Account",
+        profile_picture_url: "",
+        followers_count: 0,
+        follows_count: 0,
+        media_count: 0,
+        account_type: "BUSINESS",
+        website: "",
+        biography: "",
+      };
 
       // Check if account already connected
       const existingAccount = await this.findAccountByInstagramId(
@@ -300,7 +318,7 @@ export class InstagramService {
         username: instagramAccount.username,
         name: instagramAccount.name,
         profilePictureUrl: instagramAccount.profile_picture_url,
-        accessToken: longTokenData.accessToken,
+        accessToken: pages[0].access_token, // Use page token for Instagram API calls
         tokenType: "user",
         expiresAt: longTokenData.expiresIn
           ? new Date(Date.now() + longTokenData.expiresIn * 1000)
