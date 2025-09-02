@@ -322,7 +322,7 @@ export class InstagramService {
           followerCount: instagramAccount.followers_count || 0,
           followingCount: instagramAccount.follows_count || 0,
           mediaCount: instagramAccount.media_count || 0,
-          accountType: instagramAccount.account_type?.toLowerCase() as any,
+          accountType: "business", // Default to business since it's from Instagram Business Account
           website: instagramAccount.website,
           biography: instagramAccount.biography,
         },
@@ -733,25 +733,43 @@ export class InstagramService {
     pageAccessToken: string
   ): Promise<any> {
     try {
-      const url = `https://graph.facebook.com/v19.0/${pageId}?fields=instagram_business_account{id,username,name,profile_picture_url,followers_count,follows_count,media_count,account_type,website,biography}&access_token=${pageAccessToken}`;
+      logger.info(
+        `Trying to get Instagram Business Account for page: ${pageId}`
+      );
+      logger.info(`Using page token: ${pageAccessToken.substring(0, 20)}...`);
+
+      const url = `https://graph.facebook.com/v19.0/${pageId}?fields=instagram_business_account{id,username,name,profile_picture_url,followers_count,follows_count,media_count,website,biography}&access_token=${pageAccessToken}`;
+
+      logger.info(`API URL: ${url.substring(0, 100)}...`);
+
       const response = await fetch(url);
       const data = (await response.json()) as any;
 
+      logger.info(`API Response Status: ${response.status}`);
+      logger.info(`API Response Data:`, data);
+
       if (!response.ok) {
-        logger.error("Failed to fetch Instagram Business Account:", data);
+        logger.error("API call failed:", data);
         throw createHttpError(
           400,
-          "Failed to fetch Instagram Business Account"
+          `Instagram Business Account API failed: ${
+            data.error?.message || "Unknown error"
+          }`
         );
       }
 
       if (!data.instagram_business_account) {
+        logger.error("No Instagram Business Account in response:", data);
         throw createHttpError(
           400,
           "No Instagram Business Account found for this Facebook Page. Please connect your Instagram account to your Facebook Page."
         );
       }
 
+      logger.info(
+        "Successfully got Instagram Business Account:",
+        data.instagram_business_account
+      );
       return data.instagram_business_account;
     } catch (error: any) {
       logger.error("Error fetching Instagram Business Account:", error);
