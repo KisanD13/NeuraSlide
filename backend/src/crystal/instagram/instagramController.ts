@@ -9,6 +9,7 @@ import {
   InstagramOAuthCallback,
 } from "./instagramTypes";
 import { logger } from "../../utils/logger";
+import { config } from "../../config/config";
 
 export class InstagramController {
   /**
@@ -81,17 +82,11 @@ export class InstagramController {
         `Instagram account connected successfully for user: ${userId}`
       );
 
-      // In a real app, you'd redirect to frontend with success message
-      res.status(200).json({
-        success: true,
-        message: "Instagram account connected successfully",
-        data: {
-          accountId: account.id,
-          username: account.username,
-          connectedAt: account.connectedAt,
-        },
-        timestamp: new Date().toISOString(),
-      });
+      // Redirect to frontend with success message
+      const frontendUrl = config.frontendUrl;
+      res.redirect(
+        `${frontendUrl}/dashboard?instagram=connected&username=${account.username}`
+      );
     } catch (error: any) {
       return next(error);
     }

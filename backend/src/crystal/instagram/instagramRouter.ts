@@ -6,12 +6,16 @@ import { authenticate } from "../../middlewares/authenticate";
 
 const instagramRouter = express.Router();
 
-// Apply authentication middleware to all Instagram routes
-instagramRouter.use(authenticate);
-
-// Instagram OAuth routes
-instagramRouter.get("/oauth-url", InstagramController.getOAuthUrl);
+// Public Instagram OAuth routes (no auth required)
+instagramRouter.get(
+  "/oauth-url",
+  authenticate,
+  InstagramController.getOAuthUrl
+);
 instagramRouter.get("/callback", InstagramController.handleOAuthCallback);
+
+// Protected Instagram routes (auth required)
+instagramRouter.use(authenticate);
 
 // Instagram routes (all authenticated)
 instagramRouter.post("/connect", InstagramController.connectAccount);
