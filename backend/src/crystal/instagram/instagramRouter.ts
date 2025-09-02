@@ -6,34 +6,45 @@ import { authenticate } from "../../middlewares/authenticate";
 
 const instagramRouter = express.Router();
 
-// Apply authentication middleware to all Instagram routes
-instagramRouter.use(authenticate);
-
-// Instagram OAuth routes
+// Public Instagram OAuth routes (no auth required)
 instagramRouter.get("/oauth-url", InstagramController.getOAuthUrl);
 instagramRouter.get("/callback", InstagramController.handleOAuthCallback);
-instagramRouter.post("/connect", InstagramController.connectAccount);
+
+// Protected Instagram routes (auth required)
+instagramRouter.post(
+  "/connect",
+  authenticate,
+  InstagramController.connectAccount
+);
 
 // Instagram account management routes
-instagramRouter.get("/accounts", InstagramController.getConnectedAccounts);
+instagramRouter.get(
+  "/accounts",
+  authenticate,
+  InstagramController.getConnectedAccounts
+);
 instagramRouter.get(
   "/accounts/:accountId",
+  authenticate,
   InstagramController.getAccountDetails
 );
 instagramRouter.delete(
   "/accounts/:accountId",
+  authenticate,
   InstagramController.disconnectAccount
 );
 
 // Instagram token management routes
 instagramRouter.post(
   "/accounts/:accountId/refresh-token",
+  authenticate,
   InstagramController.refreshAccountToken
 );
 
 // Instagram utility routes
 instagramRouter.get(
   "/test-connection/:accountId",
+  authenticate,
   InstagramController.testConnection
 );
 
