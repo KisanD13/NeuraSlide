@@ -33,6 +33,7 @@ model User {
   automations Automation[]
   conversations Conversation[]
   products  Product[]     // All products for this user
+  postContexts PostContext[]     // All post contexts for this user
   jobLogs   JobLog[]     // All job executions for this user
   aiResponses AIResponse[]     // All AI responses for this user
   aiConversations AIConversation[]     // All AI conversations for this user
@@ -95,6 +96,7 @@ model InstagramAccount {
   // Relations
   team         Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
   conversations Conversation[]
+  postContexts PostContext[]
 
   @@map("instagram_accounts")
 }
@@ -195,6 +197,33 @@ model Product {
   user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("products")
+}
+
+model PostContext {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  instagramAccountId String @db.ObjectId
+  mediaId         String   // Instagram media ID
+  caption         String?  // Original post caption
+  contextType     PostContextType @default(MANUAL)
+  title           String?  // Custom title for the post
+  description     String?  // Custom description
+  keyPoints       String[] @default([]) // Key points about this post
+  products        String[] @default([]) // Related product IDs
+  pricing         Json?    // Pricing information
+  promotions      Json?    // Promotion details
+  faqs            Json?    // Post-specific FAQs
+  responseTone    String?  // How to respond to comments
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([instagramAccountId, mediaId])
+  @@map("post_contexts")
 }
 
 model JobLog {
@@ -311,6 +340,12 @@ enum ProductAvailability {
   OUT_OF_STOCK
   PRE_ORDER
   DISCONTINUED
+}
+
+enum PostContextType {
+  MANUAL
+  AUTO_GENERATED
+  HYBRID
 }
 
 // AI Models

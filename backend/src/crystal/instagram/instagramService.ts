@@ -900,4 +900,45 @@ export class InstagramService {
       throw createHttpError(500, "Unable to get comment details");
     }
   }
+
+  /**
+   * Get post details from Instagram
+   */
+  static async getPostDetails(
+    accountId: string,
+    mediaId: string
+  ): Promise<any> {
+    try {
+      // Get the Instagram account
+      const account = await prisma.instagramAccount.findUnique({
+        where: { id: accountId },
+      });
+
+      if (!account) {
+        throw createHttpError(404, "Instagram account not found");
+      }
+
+      // Get post details using Instagram Graph API
+      const url = `https://graph.facebook.com/v19.0/${mediaId}?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp&access_token=${account.accessToken}`;
+
+      const response = await fetch(url);
+      const data = (await response.json()) as any;
+
+      if (!response.ok) {
+        logger.error("Failed to get post details:", data);
+        throw createHttpError(
+          400,
+          `Failed to get post details: ${
+            data.error?.message || "Unknown error"
+          }`
+        );
+      }
+
+      logger.info(`Successfully retrieved post details for ${mediaId}`);
+      return data;
+    } catch (error: any) {
+      logger.error("Error getting post details:", error);
+      throw createHttpError(500, "Unable to get post details");
+    }
+  }
 }

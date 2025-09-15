@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../../config/db";
 import { logger } from "../../utils/logger";
 import createHttpError from "http-errors";
 import crypto from "crypto";
@@ -16,8 +16,6 @@ import {
   WebhookSubscription,
 } from "./instagramWebhookTypes";
 import { config } from "../../config/config";
-
-const prisma = new PrismaClient();
 
 export class InstagramWebhookService {
   private readonly verifyToken: string;
@@ -646,10 +644,25 @@ export class InstagramWebhookService {
         return { triggered: false, responseGenerated: false };
       }
 
+      // Find the user through team relationship
+      const teamMember = await prisma.teamMember.findFirst({
+        where: {
+          teamId: instagramAccount.teamId,
+        },
+      });
+
+      if (!teamMember) {
+        logger.warn("No team member found for Instagram account", {
+          instagramAccountId: instagramAccount.id,
+          teamId: instagramAccount.teamId,
+        });
+        return { triggered: false, responseGenerated: false };
+      }
+
       // Find active automations for this user
       const automations = await prisma.automation.findMany({
         where: {
-          userId: instagramAccount.teamId, // Use teamId to find user
+          userId: teamMember.userId,
           isActive: true,
           status: "ACTIVE",
         },
@@ -657,7 +670,7 @@ export class InstagramWebhookService {
 
       if (automations.length === 0) {
         logger.info("No active automations found for user", {
-          userId: instagramAccount.teamId,
+          userId: teamMember.userId,
         });
         return { triggered: false, responseGenerated: false };
       }
@@ -708,6 +721,7 @@ export class InstagramWebhookService {
     try {
       const commentId = commentEvent.value.comment_id;
       const commentText = commentEvent.value.text;
+      const mediaId = commentEvent.value.media_id;
 
       if (!commentId || !commentText) {
         logger.warn("Missing comment data for reply", {
@@ -717,8 +731,56 @@ export class InstagramWebhookService {
         return false;
       }
 
-      // Generate AI response using existing AI service
-      const aiResponse = await this.generateAIResponse(commentText, automation);
+      // Get post details for context
+      let postDetails = null;
+      let postContext = null;
+
+      if (mediaId) {
+        try {
+          // First, check if user has provided manual post context
+          postContext = await prisma.postContext.findFirst({
+            where: {
+              instagramAccountId: instagramAccount.id,
+              mediaId: mediaId,
+              isActive: true,
+            },
+          });
+
+          if (postContext) {
+            logger.info("Found manual post context", {
+              mediaId,
+              title: postContext.title,
+              keyPoints: postContext.keyPoints.length,
+            });
+          } else {
+            // Fallback to fetching from Instagram API
+            const { InstagramService } = await import(
+              "../../crystal/instagram/instagramService"
+            );
+            postDetails = await InstagramService.getPostDetails(
+              instagramAccount.id,
+              mediaId
+            );
+            logger.info("Retrieved post details from Instagram API", {
+              mediaId,
+              caption: postDetails?.caption?.substring(0, 100) + "...",
+            });
+          }
+        } catch (error) {
+          logger.warn(
+            "Failed to get post details, continuing without context",
+            error
+          );
+        }
+      }
+
+      // Generate AI response with post context
+      const aiResponse = await this.generateAIResponse(
+        commentText,
+        automation,
+        postDetails,
+        postContext
+      );
 
       if (!aiResponse) {
         logger.warn("Failed to generate AI response");
@@ -739,6 +801,7 @@ export class InstagramWebhookService {
         commentId,
         replyText: aiResponse,
         automationId: automation.id,
+        hasPostContext: !!postDetails || !!postContext,
       });
 
       return true;
@@ -753,21 +816,84 @@ export class InstagramWebhookService {
    */
   private async generateAIResponse(
     commentText: string,
-    automation: any
+    automation: any,
+    postDetails?: any,
+    postContext?: any
   ): Promise<string | null> {
     try {
       // Use existing AI service to generate response
       const { AIService } = await import("../../crystal/ai/aiService");
 
+      // Build context with post details if available
+      const context: any = {
+        businessContext: {
+          businessName: "NeuraSlide",
+          industry: "social_media_automation",
+          tone: "friendly",
+        },
+      };
+
+      // Add post context if available
+      if (postContext) {
+        // Use manual post context (priority)
+        context.postContext = {
+          title: postContext.title || "",
+          description: postContext.description || "",
+          keyPoints: postContext.keyPoints || [],
+          pricing: postContext.pricing || null,
+          promotions: postContext.promotions || null,
+          faqs: postContext.faqs || null,
+          responseTone: postContext.responseTone || "friendly",
+          contextType: "manual",
+        };
+      } else if (postDetails) {
+        // Fallback to Instagram API data
+        context.postContext = {
+          caption: postDetails.caption || "",
+          mediaType: postDetails.media_type || "",
+          timestamp: postDetails.timestamp || "",
+          contextType: "auto",
+        };
+      }
+
+      // Get business knowledge (products and training data)
+      try {
+        const [products, trainingData] = await Promise.all([
+          prisma.product.findMany({
+            where: { userId: automation.userId },
+            take: 10, // Limit to recent products
+          }),
+          prisma.aITrainingData.findMany({
+            where: { userId: automation.userId },
+            take: 10, // Limit to recent training data
+          }),
+        ]);
+
+        if (products.length > 0 || trainingData.length > 0) {
+          context.businessKnowledge = {
+            products: products.map((p) => ({
+              name: p.name,
+              description: p.description,
+              price: p.price,
+              category: p.category,
+            })),
+            trainingData: trainingData.map((t) => ({
+              input: t.input,
+              output: t.expectedOutput,
+              category: t.category,
+            })),
+          };
+        }
+      } catch (error) {
+        logger.warn(
+          "Failed to get business knowledge, continuing without it",
+          error
+        );
+      }
+
       const response = await AIService.generateResponse(automation.userId, {
         message: commentText,
-        context: {
-          businessContext: {
-            businessName: "NeuraSlide",
-            industry: "social_media_automation",
-            tone: "friendly",
-          },
-        },
+        context,
         maxTokens: 200,
       });
 

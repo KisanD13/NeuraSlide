@@ -57,6 +57,7 @@ import instagramRouter from "./crystal/instagram/instagramRouter";
 import conversationRouter from "./crystal/conversations/conversationRouter";
 import automationRouter from "./crystal/automations/automationRouter";
 import productRouter from "./crystal/products/productRouter";
+import { postContextRouter } from "./crystal/postContext/postContextRouter";
 import aiRouter from "./crystal/ai/aiRouter";
 import campaignRouter from "./crystal/campaigns/campaignRouter";
 import dashboardRouter from "./crystal/dashboard/dashboardRouter";
@@ -104,6 +105,7 @@ app.get("/", (_req, res) => {
           conversations: "/crystal/conversations",
           automations: "/crystal/automations",
           products: "/crystal/products",
+          postContext: "/crystal/post-context",
           ai: "/crystal/ai",
           campaigns: "/crystal/campaigns",
           dashboard: "/crystal/dashboard",
@@ -132,6 +134,7 @@ app.use("/crystal/instagram", instagramRouter);
 app.use("/crystal/conversations", conversationRouter);
 app.use("/crystal/automations", automationRouter);
 app.use("/crystal/products", productRouter);
+app.use("/crystal/post-context", postContextRouter);
 app.use("/crystal/ai", aiRouter);
 app.use("/crystal/campaigns", campaignRouter);
 app.use("/crystal/dashboard", dashboardRouter);
