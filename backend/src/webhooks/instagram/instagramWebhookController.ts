@@ -184,6 +184,8 @@ export class InstagramWebhookController {
         "messaging_postbacks",
         "message_deliveries",
         "message_reads",
+        "comments",
+        "mentions",
       ];
       const invalidEvents = events.filter(
         (event) => !validEvents.includes(event)

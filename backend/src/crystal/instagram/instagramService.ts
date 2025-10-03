@@ -29,12 +29,13 @@ export class InstagramService {
       "public_profile",
       "pages_show_list",
       "pages_manage_metadata",
+      "pages_read_engagement",
       "instagram_basic",
       "instagram_manage_comments",
       "instagram_manage_messages",
       "business_management",
     ],
-    apiVersion: "v19.0",
+    apiVersion: "v23.0",
     baseUrl: "https://graph.facebook.com",
   };
 
@@ -54,7 +55,7 @@ export class InstagramService {
         state: state,
       });
 
-      const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`;
+      const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?${params.toString()}`;
 
       logger.info(`Generated Instagram OAuth URL for user: ${userId}`);
 
@@ -82,7 +83,7 @@ export class InstagramService {
   static async exchangeCodeForToken(code: string): Promise<InstagramTokens> {
     try {
       const tokenUrl = new URL(
-        `https://graph.facebook.com/v19.0/oauth/access_token`
+        `https://graph.facebook.com/v23.0/oauth/access_token`
       );
       tokenUrl.searchParams.append("client_id", this.INSTAGRAM_CONFIG.appId);
       tokenUrl.searchParams.append(
@@ -147,7 +148,7 @@ export class InstagramService {
         "biography",
       ].join(",");
 
-      const url = `https://graph.facebook.com/v19.0/me?fields=${fields}&access_token=${accessToken}`;
+      const url = `https://graph.facebook.com/v23.0/me?fields=${fields}&access_token=${accessToken}`;
 
       const response = await fetch(url);
       const data = (await response.json()) as InstagramUser;
@@ -178,7 +179,7 @@ export class InstagramService {
   ): Promise<InstagramTokens> {
     try {
       const url = new URL(
-        `https://graph.facebook.com/v19.0/oauth/access_token`
+        `https://graph.facebook.com/v23.0/oauth/access_token`
       );
       url.searchParams.append("grant_type", "fb_exchange_token");
       url.searchParams.append("client_id", this.INSTAGRAM_CONFIG.appId);
@@ -219,7 +220,7 @@ export class InstagramService {
   ): Promise<InstagramTokens> {
     try {
       const url = new URL(
-        `https://graph.facebook.com/v19.0/oauth/access_token`
+        `https://graph.facebook.com/v23.0/oauth/access_token`
       );
       url.searchParams.append("grant_type", "fb_exchange_token");
       url.searchParams.append("client_id", this.INSTAGRAM_CONFIG.appId);
@@ -319,7 +320,7 @@ export class InstagramService {
         name: instagramAccount.name,
         profilePictureUrl: instagramAccount.profile_picture_url,
         accessToken: pages[0].access_token, // Use page token for Instagram API calls
-        tokenType: "user",
+        tokenType: "page",
         expiresAt: longTokenData.expiresIn
           ? new Date(Date.now() + longTokenData.expiresIn * 1000)
           : undefined,
@@ -723,7 +724,7 @@ export class InstagramService {
    */
   private static async getUserPages(accessToken: string): Promise<any[]> {
     try {
-      const url = `https://graph.facebook.com/v19.0/me/accounts?access_token=${accessToken}`;
+      const url = `https://graph.facebook.com/v23.0/me/accounts?access_token=${accessToken}`;
       const response = await fetch(url);
       const data = (await response.json()) as any;
 
@@ -752,7 +753,7 @@ export class InstagramService {
       );
       logger.info(`Using page token: ${pageAccessToken.substring(0, 20)}...`);
 
-      const url = `https://graph.facebook.com/v19.0/${pageId}?fields=instagram_business_account{id,username,name,profile_picture_url,followers_count,follows_count,media_count,website,biography}&access_token=${pageAccessToken}`;
+      const url = `https://graph.facebook.com/v23.0/${pageId}?fields=instagram_business_account{id,username,name,profile_picture_url,followers_count,follows_count,media_count,website,biography}&access_token=${pageAccessToken}`;
 
       logger.info(`API URL: ${url.substring(0, 100)}...`);
 
@@ -822,7 +823,7 @@ export class InstagramService {
       }
 
       // Use the Instagram access token to reply to the comment
-      const url = `https://graph.facebook.com/v19.0/${commentId}/comments`;
+      const url = `https://graph.facebook.com/v23.0/${commentId}/comments`;
 
       logger.info(`Posting reply to: ${url}`);
       logger.info(`Using account: ${account.igUsername} (${account.igUserId})`);
@@ -878,7 +879,7 @@ export class InstagramService {
       }
 
       // Get comment details using Instagram Graph API
-      const url = `https://graph.facebook.com/v19.0/${commentId}?fields=id,text,from,created_time,like_count&access_token=${account.accessToken}`;
+      const url = `https://graph.facebook.com/v23.0/${commentId}?fields=id,text,from,created_time,like_count&access_token=${account.accessToken}`;
 
       const response = await fetch(url);
       const data = (await response.json()) as any;
@@ -919,7 +920,7 @@ export class InstagramService {
       }
 
       // Get post details using Instagram Graph API
-      const url = `https://graph.facebook.com/v19.0/${mediaId}?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp&access_token=${account.accessToken}`;
+      const url = `https://graph.facebook.com/v23.0/${mediaId}?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp&access_token=${account.accessToken}`;
 
       const response = await fetch(url);
       const data = (await response.json()) as any;
