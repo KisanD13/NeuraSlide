@@ -637,6 +637,13 @@ export class InstagramWebhookService {
         where: { igUserId: instagramUserId },
       });
 
+      logger.info("DEBUG: Instagram account lookup", {
+        instagramUserId,
+        found: !!instagramAccount,
+        accountId: instagramAccount?.id,
+        teamId: instagramAccount?.teamId,
+      });
+
       if (!instagramAccount) {
         logger.warn("Instagram account not found for automation", {
           instagramUserId,
@@ -649,6 +656,12 @@ export class InstagramWebhookService {
         where: {
           teamId: instagramAccount.teamId,
         },
+      });
+
+      logger.info("DEBUG: Team member lookup", {
+        teamId: instagramAccount.teamId,
+        found: !!teamMember,
+        userId: teamMember?.userId,
       });
 
       if (!teamMember) {
@@ -666,6 +679,12 @@ export class InstagramWebhookService {
           isActive: true,
           status: "ACTIVE",
         },
+      });
+
+      logger.info("DEBUG: Automations lookup", {
+        userId: teamMember.userId,
+        found: automations.length,
+        automationNames: automations.map((a) => a.name),
       });
 
       if (automations.length === 0) {
