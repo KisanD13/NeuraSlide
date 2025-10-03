@@ -32,6 +32,16 @@ export interface AIContext {
     industry?: string;
     tone?: "professional" | "casual" | "friendly";
   };
+  postContext?: {
+    title?: string;
+    description?: string;
+    keyPoints?: string[];
+    pricing?: any;
+    promotions?: any;
+    faqs?: any;
+    responseTone?: string;
+    contextType?: string;
+  };
 }
 
 export interface AIResponse {

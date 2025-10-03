@@ -568,23 +568,24 @@ export class AutomationService {
   }
 
   private static generateFallbackResponse(
-    prompt: string,
-    message: string,
+    _prompt: string,
+    _message: string,
     maxLength: number
   ): string {
+    // Simple "Thank you" responses for Instagram comments
     const responses = [
-      "Thank you for your message! I understand you're asking about this. Let me help you with that.",
-      "I appreciate you reaching out. Based on what you've shared, here's what I can tell you.",
-      "Thanks for contacting us! I'd be happy to assist you with your inquiry.",
-      "Hello! I see your message and I'm here to help. Let me provide you with some information.",
-      "Thank you for getting in touch! I understand your question and here's my response.",
+      "Thank you! 😊",
+      "Thanks! 🙏",
+      "Appreciate it! ✨",
+      "Thank you for the comment! 💙",
+      "Thanks for the support! 🎉",
     ];
 
     const randomResponse =
       responses[Math.floor(Math.random() * responses.length)];
-    const contextInfo = `[Context: ${prompt}] [Message: ${message}]`;
 
-    let result = `${randomResponse} ${contextInfo}`;
+    // Keep it simple - just the thank you message
+    let result: string = randomResponse || "Thank you! 😊";
 
     if (result.length > maxLength) {
       result = result.substring(0, maxLength - 3) + "...";

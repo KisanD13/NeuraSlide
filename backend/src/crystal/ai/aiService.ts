@@ -401,28 +401,53 @@ export class AIService {
         return this.generateFallbackResponse(request);
       }
 
-      // TODO: Implement actual OpenAI API call
-      // This is a placeholder for the OpenAI integration
-      // In production, you would use:
-      // const openai = new OpenAI({ apiKey: config.openaiApiKey });
-      // const completion = await openai.chat.completions.create({
-      //   model: request.model || "gpt-3.5-turbo",
-      //   messages: [
-      //     { role: "system", content: "You are a helpful assistant." },
-      //     { role: "user", content: request.message }
-      //   ],
-      //   max_tokens: request.maxTokens || 200,
-      //   temperature: request.temperature || 0.7
-      // });
-      // return {
-      //   content: completion.choices[0].message.content || "",
-      //   tokensUsed: completion.usage?.total_tokens || 0,
-      //   confidence: 0.9,
-      //   metadata: { model: request.model || "gpt-3.5-turbo" }
-      // };
+      // Import OpenAI dynamically
+      const { OpenAI } = await import("openai");
+      const openai = new OpenAI({
+        apiKey: config.openaiApiKey,
+      });
 
-      // For now, generate a fallback response
-      return this.generateFallbackResponse(request);
+      // Build system prompt from context
+      let systemPrompt =
+        "You are a helpful assistant that responds to Instagram comments in a friendly, engaging way. Keep responses under 200 characters and use emojis when appropriate.";
+
+      if (request.context?.businessContext) {
+        systemPrompt += `\n\nBusiness Context: ${JSON.stringify(
+          request.context.businessContext
+        )}`;
+      }
+
+      if (request.context?.postContext) {
+        systemPrompt += `\n\nPost Context: ${JSON.stringify(
+          request.context.postContext
+        )}`;
+      }
+
+      // Call OpenAI API
+      const completion = await openai.chat.completions.create({
+        model: request.model || config.openaiModel || "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: request.message },
+        ],
+        max_tokens: request.maxTokens || config.openaiMaxTokens || 200,
+        temperature: request.temperature || config.openaiTemperature || 0.7,
+      });
+
+      const response =
+        completion.choices[0]?.message?.content ||
+        "Thank you for your comment!";
+      const tokensUsed = completion.usage?.total_tokens || 0;
+
+      return {
+        content: response,
+        tokensUsed: tokensUsed,
+        confidence: 0.9,
+        metadata: {
+          model: completion.model,
+          finishReason: completion.choices[0]?.finish_reason,
+        },
+      };
     } catch (error: any) {
       logger.error("Error calling AI model:", error);
       throw createHttpError(500, "Failed to generate AI response");

@@ -22,7 +22,7 @@ async function setupFreshInstagram() {
       console.log(`\n📱 Instagram Account: ${account.igUsername}`);
       console.log(`   ID: ${account.id}`);
       console.log(`   Team ID: ${account.teamId}`);
-      console.log(`   User ID: ${account.userId}`);
+      console.log(`   Team ID: ${account.teamId}`);
 
       // Check if team member exists
       const teamMember = await prisma.teamMember.findFirst({
@@ -34,37 +34,35 @@ async function setupFreshInstagram() {
           "   ❌ No team member found - this will cause automation to fail"
         );
 
-        // Try to find team member by userId instead
-        const teamMemberByUserId = await prisma.teamMember.findFirst({
-          where: { userId: account.userId },
+        // Try to find team member by teamId instead
+        const teamMemberByTeamId = await prisma.teamMember.findFirst({
+          where: { teamId: account.teamId },
         });
 
-        if (teamMemberByUserId) {
-          console.log("   🔧 Found team member by userId, fixing teamId...");
+        if (teamMemberByTeamId) {
+          console.log(
+            "   🔧 Found team member by teamId, relationship is correct"
+          );
 
-          // Update Instagram account with correct teamId
-          await prisma.instagramAccount.update({
-            where: { id: account.id },
-            data: { teamId: teamMemberByUserId.teamId },
-          });
-
-          console.log("   ✅ Fixed teamId relationship");
+          console.log("   ✅ Team relationship is correct");
         } else {
-          console.log("   ❌ No team member found by userId either");
+          console.log("   ❌ No team member found by teamId either");
         }
       } else {
         console.log("   ✅ Team member found");
       }
 
       // Check if automation exists for this user
-      const userId = teamMember?.userId || account.userId;
-      const automations = await prisma.automation.findMany({
-        where: { userId },
-      });
+      const userId = teamMember?.userId;
+      const automations = userId
+        ? await prisma.automation.findMany({
+            where: { userId },
+          })
+        : [];
 
       console.log(`   🤖 Found ${automations.length} automations for user`);
 
-      if (automations.length === 0) {
+      if (automations.length === 0 && userId) {
         console.log("   🔧 Creating default automation...");
 
         const automation = await prisma.automation.create({
@@ -104,6 +102,8 @@ async function setupFreshInstagram() {
 
         console.log("   ✅ Default automation created!");
         console.log(`   Automation ID: ${automation.id}`);
+      } else if (!userId) {
+        console.log("   ❌ No user ID found, cannot create automation");
       }
     }
 

@@ -2,6 +2,7 @@
 
 import express from "express";
 import { InstagramController } from "./instagramController";
+import { InstagramDMController } from "./instagramDMController";
 import { authenticate } from "../../middlewares/authenticate";
 
 const instagramRouter = express.Router();
@@ -51,6 +52,17 @@ instagramRouter.post(
 instagramRouter.get(
   "/comments/:commentId",
   InstagramController.getCommentDetails
+);
+
+// Instagram DM management routes (LinkDM features)
+instagramRouter.post("/dm/send", InstagramDMController.sendDM);
+instagramRouter.get(
+  "/dm/conversations",
+  InstagramDMController.getConversations
+);
+instagramRouter.get(
+  "/dm/conversation/:userId",
+  InstagramDMController.getConversation
 );
 
 export default instagramRouter;

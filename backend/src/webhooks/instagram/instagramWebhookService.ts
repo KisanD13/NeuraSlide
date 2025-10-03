@@ -578,24 +578,72 @@ export class InstagramWebhookService {
     events: string[]
   ): Promise<WebhookSubscription> {
     try {
-      // In production, this would create a subscription via Instagram Graph API
+      // Get Instagram account details
+      const instagramAccount = await prisma.instagramAccount.findUnique({
+        where: { id: instagramAccountId },
+      });
+
+      if (!instagramAccount) {
+        throw createHttpError(404, "Instagram account not found");
+      }
+
+      // Create real webhook subscription via Meta Graph API
+      const webhookUrl = `${
+        process.env["BACKEND_URL"] || "https://neuraslide.onrender.com"
+      }/webhooks/instagram`;
+
+      // Subscribe to Instagram events
+      const subscriptionResponse = await fetch(
+        `https://graph.facebook.com/v23.0/${instagramAccount.igUserId}/subscribed_apps`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            subscribed_fields: events.join(","),
+            callback_url: webhookUrl,
+            verify_token: this.verifyToken,
+            access_token: instagramAccount.accessToken,
+          }),
+        }
+      );
+
+      const subscriptionData = (await subscriptionResponse.json()) as any;
+
+      if (!subscriptionResponse.ok) {
+        logger.error(
+          "Failed to create Meta webhook subscription:",
+          subscriptionData
+        );
+        throw createHttpError(
+          400,
+          `Failed to create webhook subscription: ${
+            subscriptionData.error?.message || "Unknown error"
+          }`
+        );
+      }
+
+      // Store subscription in database
       const subscription: WebhookSubscription = {
         id: crypto.randomUUID(),
         userId,
         instagramAccountId,
-        subscriptionId: crypto.randomUUID(),
+        subscriptionId: subscriptionData.id || crypto.randomUUID(),
         isActive: true,
         events,
-        webhookUrl: `${process.env["BACKEND_URL"]}/webhooks/instagram`,
+        webhookUrl,
         verifyToken: this.verifyToken,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      logger.info("Webhook subscription created", {
+      logger.info("Real Meta webhook subscription created", {
         userId,
         instagramAccountId,
         events,
+        subscriptionId: subscription.subscriptionId,
+        webhookUrl,
       });
 
       return subscription;
@@ -806,15 +854,38 @@ export class InstagramWebhookService {
         return false;
       }
 
-      // Post reply using Instagram service
-      const { InstagramService } = await import(
-        "../../crystal/instagram/instagramService"
+      // Send DM instead of comment reply (LinkDM feature)
+      const { InstagramDMService } = await import(
+        "../../crystal/instagram/instagramDMService"
       );
-      await InstagramService.replyToComment(
-        instagramAccount.id,
-        commentId,
-        aiResponse
-      );
+
+      // Get commenter's Instagram user ID
+      const commenterId = commentEvent.value.from?.id;
+
+      if (commenterId) {
+        await InstagramDMService.sendDM(
+          instagramAccount.id,
+          commenterId,
+          aiResponse
+        );
+
+        logger.info("Successfully sent DM to commenter", {
+          commenterId,
+          dmText: aiResponse,
+        });
+      } else {
+        logger.warn("No commenter ID found, falling back to comment reply");
+
+        // Fallback to comment reply if DM fails
+        const { InstagramService } = await import(
+          "../../crystal/instagram/instagramService"
+        );
+        await InstagramService.replyToComment(
+          instagramAccount.id,
+          commentId,
+          aiResponse
+        );
+      }
 
       logger.info("Successfully posted automated reply", {
         commentId,
@@ -914,6 +985,8 @@ export class InstagramWebhookService {
         message: commentText,
         context,
         maxTokens: 200,
+        temperature: 0.7,
+        model: "gpt-3.5-turbo",
       });
 
       return response.response;
