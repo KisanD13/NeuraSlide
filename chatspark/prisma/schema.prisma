@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+
+model User { 
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  clerkId         String    @unique
+  email           String    @unique
+  firstName       String
+  lastName        String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+ 
+  subscriptions   Subscription?
+  Integrations    Integrations[]
+  automations     Automation[]
+}
+
+ model Subscription {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  User            User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String?   @unique @db.ObjectId
+ }
+
+ model Integrations {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  name            INTEGRATIONS  @default(INSTAGRAM)
+  createdAt       DateTime  @default(now())
+  User            User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String?   @db.ObjectId
+  token           String    @unique @db.ObjectId
+  expiresAt       DateTime?
+  instagramId     String?
+ }
+
+ model Automation {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  name            String    @default("Untitled Automation")
+  createdAt       DateTime  @default(now())
+  active          Boolean   @default(false)
+  trigger         Trigger[]
+  listener        Listener[]
+  posts           Post[]
+  dms             Dms[]
+
+  User            User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String?   @db.ObjectId
+  keywords        Keyword[]
+ }
+
+ model Listener {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  Automation      Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  automationId    String    @unique @db.ObjectId
+  listener        LISTENERS @default(MESSAGE)
+  prompt          String
+  commentReply    String?
+  dmCount         Int       @default(0)
+  commentCount    Int       @default(0)
+ }
+
+ model Trigger {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  type            String
+  Automation      Automation? @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  automationId    String?   @db.ObjectId
+ }
+
+ model Dms {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  Automation      Automation? @relation(fields: [automationId], references: [id])
+  automationId    String?   @db.ObjectId
+  createdAt       DateTime  @default(now())
+  senderId        String?
+  reciever        String?
+  message         String?
+ }
+
+ model Post {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  postid          String
+  caption         String?
+  media           String
+  mediaType       MEDIATYPE @default(IMAGE)
+  Automation      Automation? @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  automationId    String?   @db.ObjectId
+ }
+
+ model Keyword {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  word            String
+  Automation      Automation? @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  automationId    String?   @db.ObjectId
+ }
+
+
+enum INTEGRATIONS {
+  INSTAGRAM
+}
+
+enum LISTENERS {
+  SMARTAI
+  MESSAGE
+}
+
+enum MEDIATYPE {
+  IMAGE
+  VIDEO
+  CAROSEL_ALBUM
+}
