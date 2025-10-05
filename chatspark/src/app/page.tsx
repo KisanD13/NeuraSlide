@@ -55,7 +55,7 @@ export default function Home() {
 
         <Button
           asChild
-          className="bg-white text-primary hover:bg-gray-100 cursor-pointer"
+          className="bg-gradient-to-r from-cyan-400 to-blue-500 cursor-pointer"
         >
           <Link href="/dashboard">Login</Link>
         </Button>
